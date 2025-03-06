@@ -1,0 +1,41 @@
+env:
+  device: mps
+model:
+  # TYPE (ollama, diffusion, llm)
+  type: ollama
+  # URL (only if type == ollama)
+  url: http://localhost:11434/api/chat
+  # NAME (Model Name, Local Path, or Huggingface Name)
+  name: llama3
+  # name: mistralai/Mistral-7B-Instruct-v0.1
+  # name: OFA-Sys/small-stable-diffusion-v0
+dataset:
+  # TYPE (local_image, hf)
+  type: hf
+  # NAME (Local Path, Huggingface Name)
+  name: Sp1786/multiclass-sentiment-analysis-dataset
+  # BATCH_SIZE (Dataset is split and processed in batches)
+  batch_size: 1
+  # SAMPLES (If provided only number of samples are taken from the dataset => Default: None)
+  samples: 10
+classifier:
+  # TYPE (ollama, vit, llm)
+  type: ollama
+  # URL (only if type == ollama)
+  url: http://localhost:11434/api/chat
+  # NAME (Model Name, Local Path, or Huggingface Name)
+  name: llama3
+  # OUTPUT (Class, Logits =>  Defines if the classifier can output logits or only class names)
+  output: class
+  # NAME (Model Name, Local Path, or Huggingface Name)
+  # name: akahana/vit-base-cats-vs-dogs
+  # FEATURE_EXTRACTOR (If type == vit)
+  # feature_extractor: google/vit-base-patch16-224-in21k
+  # LABELS (List of labels that the classifier can assign)
+  labels: 
+    - positive
+    - neutral
+    - negative
+evaluation:
+  # METHOD (CC)
+  method: CC

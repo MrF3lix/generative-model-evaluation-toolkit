@@ -1,0 +1,29 @@
+[project]
+name = "evaluation_toolkit"
+version = "0.1.0"
+description = "A toolkit for robust evaluation of generative models."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "cgeval",
+    "omegaconf>=2.3.0",
+    "torch>=2.6.0",
+]
+
+[project.scripts]
+generate = "uv_workspaces.generate:main"
+annotate = "uv_workspaces.annotate:main"
+evaluate = "uv_workspaces.evaluate:main"
+
+[tool.uv.workspace]
+members = ["package/cgeval"]
+
+[tool.uv.sources]
+cgeval = { workspace = true }
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/uv_workspaces"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

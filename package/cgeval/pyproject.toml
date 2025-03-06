@@ -1,0 +1,22 @@
+[project]
+name = "cgeval"
+version = "0.1.0"
+description = "A library designed for robust evaluation of generative models by applying quantification methods to correct classifier bias."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "datasets>=3.3.2",
+    "diffusers>=0.32.2",
+    "scikit-learn>=1.6.1",
+    "torch>=2.6.0",
+    "torchvision>=0.21.0",
+    "tqdm>=4.67.1",
+    "transformers>=4.49.0",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/cgeval"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
