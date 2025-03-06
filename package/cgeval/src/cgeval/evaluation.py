@@ -5,5 +5,9 @@ class Evaluation():
     def __init__(self):
         pass
 
-    def run(self, dataloader: DataLoader, classifier: Classifier, quantification: QuantificationMethod):
-        return quantification.eval(dataloader, classifier)
+    def run(self, dataloader: DataLoader, classifiers: list[Classifier], quantification: QuantificationMethod):
+        reports = []
+        for classifier in classifiers:
+            report = quantification.eval(dataloader, classifier)
+            reports.append(report)
+        return reports

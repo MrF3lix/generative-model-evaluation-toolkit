@@ -17,11 +17,11 @@ class ClassifyAndCount(QuantificationMethod):
 
             actual.extend(batch['class'])
 
-            if self.cfg.classifier.output == 'class':
+            if classifier.cfg.output == 'class':
                 predictions.extend(outputs)
-            if self.cfg.classifier.output == 'logits':
+            if classifier.cfg.output == 'logits':
                 # TODO: note that argmax doesn't return the logits but the model returns logits that need to be converted
                 predictions.extend(outputs.logits.argmax(dim=1))
 
     
-        return classification_report(actual, predictions, labels=self.cfg.classifier.labels)
+        return classification_report(actual, predictions, labels=classifier.cfg.labels)

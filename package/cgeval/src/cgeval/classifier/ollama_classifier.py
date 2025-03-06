@@ -11,10 +11,10 @@ class OllamaClassifier(Classifier):
     def classify(self, inputs):
         predictions = []
         for input in inputs:
-            content = f"Classify this text and assign it one of the following sentiment classes: {self.cfg.classifier.labels}. Only respond with one of the classes nothing else. [TEXT]{input}[/TEXT]"
+            content = f"Classify this text and assign it one of the following sentiment classes: {self.cfg.labels}. Only respond with one of the classes nothing else. [TEXT]{input}[/TEXT]"
 
             payload = {
-                'model': self.cfg.classifier.name,
+                'model': self.cfg.name,
                 'messages': [
                     {
                         'role': 'user',
@@ -24,9 +24,9 @@ class OllamaClassifier(Classifier):
                 'stream': False
             }
 
-            x = requests.post(self.cfg.classifier.url, json=payload)
+            x = requests.post(self.cfg.url, json=payload)
             response = json.loads(x.text)
 
-            predictions.append(response['message']['content'])
+            predictions.append(response['message']['content'].replace('[', '').replace(']', ''))
 
         return predictions

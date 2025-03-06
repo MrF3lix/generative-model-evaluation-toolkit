@@ -75,7 +75,8 @@ Configurations related to the evaluation dataset.
 |`samples`|Number|None|If provided only the specified number of sampels are taken from the dataset. Otherwise all samples are used.|
 
 ### `classifier`
-Configurations related to the classifier.
+Configurations related to the classifier. 
+Multiple classifiers can be used.
 
 |Name|Type / Options|Default|Description|
 |-|-|-|-|
@@ -84,6 +85,7 @@ Configurations related to the classifier.
 |`name`|String||Local Path, Huggingface Name, Ollama Model Name|
 |`output`|`class`</br>`logits`||Defines if the classifier outputs logits or class labels directly.|
 |`labels`|String[]||List of labels the classifier can assign.|
+
 
 ### `method`
 Configurations related to the quantification method that is applied.

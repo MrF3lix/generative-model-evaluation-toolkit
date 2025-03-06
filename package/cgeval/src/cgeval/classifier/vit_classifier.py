@@ -9,8 +9,8 @@ class ViTClassifier(Classifier):
         super().__init__()
 
 
-        self.feature_extractor = ViTFeatureExtractor.from_pretrained(cfg.classifier.feature_extractor)
-        self.model = ViTForImageClassification.from_pretrained(cfg.classifier.name)
+        self.feature_extractor = ViTFeatureExtractor.from_pretrained(cfg.feature_extractor)
+        self.model = ViTForImageClassification.from_pretrained(cfg.name)
 
     def classify(self, inputs):
         with torch.no_grad():
