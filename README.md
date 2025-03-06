@@ -43,6 +43,9 @@ If you want to use this exact toolkit follow these steps:
 3. Run `uv sync` in the root folder of the repository
 4. Create your custom `config.yaml` file to define your pipeline.
 
+## Architecture
+
+Read more about the [architecture](./docs/architecture.md) and decisions during the development of this tooklit.
 
 ## Config
 
