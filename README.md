@@ -83,7 +83,7 @@ Multiple classifiers can be used.
 
 |Name|Type / Options|Default|Description|
 |-|-|-|-|
-|`type`|`llm`</br>`diffusion`</br>`ollama`||Descibes the type of the model that is used. From it the modality is also inferred.|
+|`type`|`llm`</br>`diffusion`</br>`ollama`</br>`transformers`||Descibes the type of the model that is used. From it the modality is also inferred.|
 |`url`|String||Required if type is `ollama`. Endpoint of the ollama REST API|
 |`name`|String||Local Path, Huggingface Name, Ollama Model Name|
 |`output`|`class`</br>`logits`||Defines if the classifier outputs logits or class labels directly.|
