@@ -1,5 +1,5 @@
 from torch.utils.data import DataLoader
-from . import Classifier, QuantificationMethod, Report
+from cgeval import Classifier, QuantificationMethod, Report
 
 class Evaluation():
     def __init__(self):
