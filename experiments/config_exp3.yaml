@@ -1,3 +1,6 @@
+experiment:
+  name: 'identical_classifiers_llama3.2'
+  report_path: 'out'
 env:
   device: mps
 model:
@@ -7,21 +10,12 @@ model:
 dataset:
   type: hf
   name: Sp1786/multiclass-sentiment-analysis-dataset
-  batch_size: 1
-  samples: 1000
+  batch_size: 25
 classifier:
-  - id: FinancialBERT
-    type: transformers
-    name: ahmedrachid/FinancialBERT-Sentiment-Analysis
-    output: class
-    labels: 
-      - positive
-      - neutral
-      - negative
-  - id: ollama3
+  - id: ollama3.2
     type: ollama
     url: http://localhost:11434/api/chat
-    name: llama3
+    name: llama3.2
     output: class
     labels: 
       - positive

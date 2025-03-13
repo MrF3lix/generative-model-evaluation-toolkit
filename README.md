@@ -26,6 +26,8 @@ uv run annotate
 uv run evaluate
 ```
 
+The tasks and their dependencies are descirbed in the section [Tasks](#tasks)
+
 
 ## Prerequisites
 
@@ -51,51 +53,63 @@ Read more about the [architecture](./docs/architecture.md) and decisions during 
 
 The `config.yaml` file is split into five sections:
 
+### `experiment`
+Configurations related to the environment.
+
+| Name          | Type / Options | Default | Description                                                  |
+| ------------- | -------------- | ------- | ------------------------------------------------------------ |
+| `name`        | String         |         | Used to name the results folder and identify the experiment. |
+| `report_path` | String         |         | Folder where the reports are stored in.                      |
+
 ### `env`
 Configurations related to the environment.
 
-|Name|Type / Options|Default|Description|
-|-|-|-|-|
-|`device`|`cpu`</br>`cuda`</br>`mps`|`cpu`|Defines on which device the weights and samples are stored during processing.|
+| Name     | Type / Options             | Default | Description                                                                   |
+| -------- | -------------------------- | ------- | ----------------------------------------------------------------------------- |
+| `device` | `cpu`</br>`cuda`</br>`mps` | `cpu`   | Defines on which device the weights and samples are stored during processing. |
 
 ### `model`
 Configurations related to the generative model.
 
-|Name|Type / Options|Default|Description|
-|-|-|-|-|
-|`type`|`llm`</br>`diffusion`</br>`ollama`||Descibes the type of the model that is used. From it the modality is also inferred.|
-|`url`|String||Required if type is `ollama`. Endpoint of the ollama REST API|
-|`name`|String||Local Path, Huggingface Name, Ollama Model Name|
+| Name          | Type / Options                     | Default | Description                                                                                      |
+| ------------- | ---------------------------------- | ------- | ------------------------------------------------------------------------------------------------ |
+| `type`        | `llm`</br>`diffusion`</br>`ollama` |         | Descibes the type of the model that is used. From it the modality is also inferred.              |
+| `url`         | String                             |         | Required if type is `ollama`. Endpoint of the ollama REST API                                    |
+| `name`        | String                             |         | Local Path, Huggingface Name, Ollama Model Name                                                  |
+| `samples`     | Number                             |         | Number of samples that should be generated                                                       |
+| `base_prompt` | String                             |         | Base prompt that is used for the generation                                                      |
+| `labels`      | List                               |         | List of labels that should be used during the generation, each label has a `name` and a `ratio`. |
 
 ### `dataset`
 Configurations related to the evaluation dataset.
 
-|Name|Type / Options|Default|Description|
-|-|-|-|-|
-|`type`|`local_image`</br>`hf`||Describes the type and origin of the dataset.|
-|`name`|String||Local Path, Huggingface Name|
-|`batch_size`|Number|None|If provided batches the dataset. Otherwise a single batch is used.|
-|`samples`|Number|None|If provided only the specified number of sampels are taken from the dataset. Otherwise all samples are used.|
+| Name         | Type / Options                          | Default | Description                                                                                                  |
+| ------------ | --------------------------------------- | ------- | ------------------------------------------------------------------------------------------------------------ |
+| `type`       | `local_image`</br>`local_text`</br>`hf` |         | Describes the type and origin of the dataset.                                                                |
+| `name`       | String                                  |         | Local Path, Huggingface Name                                                                                 |
+| `batch_size` | Number                                  | None    | If provided batches the dataset. Otherwise a single batch is used.                                           |
+| `samples`    | Number                                  | None    | If provided only the specified number of sampels are taken from the dataset. Otherwise all samples are used. |
 
 ### `classifier`
 Configurations related to the classifier. 
 Multiple classifiers can be used.
 
-|Name|Type / Options|Default|Description|
-|-|-|-|-|
-|`type`|`llm`</br>`diffusion`</br>`ollama`</br>`transformers`||Descibes the type of the model that is used. From it the modality is also inferred.|
-|`url`|String||Required if type is `ollama`. Endpoint of the ollama REST API|
-|`name`|String||Local Path, Huggingface Name, Ollama Model Name|
-|`output`|`class`</br>`logits`||Defines if the classifier outputs logits or class labels directly.|
-|`labels`|String[]||List of labels the classifier can assign.|
+| Name     | Type / Options                                        | Default | Description                                                                         |
+| -------- | ----------------------------------------------------- | ------- | ----------------------------------------------------------------------------------- |
+| `type`   | `llm`</br>`diffusion`</br>`ollama`</br>`transformers` |         | Descibes the type of the model that is used. From it the modality is also inferred. |
+| `url`    | String                                                |         | Required if type is `ollama`. Endpoint of the ollama REST API                       |
+| `name`   | String                                                |         | Local Path, Huggingface Name, Ollama Model Name                                     |
+| `output` | `class`</br>`logits`                                  |         | Defines if the classifier outputs logits or class labels directly.                  |
+| `labels` | String[]                                              |         | List of labels the classifier can assign.                                           |
 
 
 ### `method`
 Configurations related to the quantification method that is applied.
 
-|Name|Type / Options|Default|Description|
-|-|-|-|-|
-|`method`|`CC`||Quantification Method used|
+| Name     | Type / Options   | Default | Description                                                                       |
+| -------- | ---------------- | ------- | --------------------------------------------------------------------------------- |
+| `method` | `CC`             |         | Quantification Method used                                                        |
+| `method` | `Classification` |         | Creates a standard classification report. Requires a dataset with a ground truth. |
 
 ### Sample
 Here is an example of the configuration shown.
@@ -131,6 +145,70 @@ As the classifier a local version of `llama3` throught the Ollama application is
 
 The naive evaluation method used is `CC` (Classify and Count).
 
+## Tasks
+The toolkit consists of three tasks.
+
+1. Generate
+2. Annotate
+3. Evaluate
+
+
+### Generate
+
+Generates a dataset using a provided model, class distributions, and expected sample size.
+
+The generated dataset looks like this:
+
+| $I$   | $o=\pi(i)$ |
+| ----- | ---------- |
+| $i_1$ | $o_1$      |
+| ...   | ...        |
+| $i_n$ | $o_n$      |
+
+The first column $I$ is the input, usually the condition, to the generative model $\pi$.
+The second column describes the generated output based on the given input condition $i$.
+
+The following options are required for the generation task:
+
+- $\pi$: Generative model
+- $n$: Number of samples to generate
+- Distribution of the input features
+
+
+### Annotate
+
+Helps to annotate a subsample of the generated dataset.
+
+The annotated dataset then looks like this:
+
+| $I$   | $o=\pi(i)$ | $\Phi$     |
+| ----- | ---------- | ---------- |
+| $i_1$ | $o_1$      | $\omega_1$ |
+| ...   | ...        | ...        |
+| $i_k$ | $o_k$      | $\omega_k$ |
+
+
+- $k$: Number of samples that will should an annotation
+
+### Evaluate
+
+Extends the dataset with a column for each classifier $\Mu$.
+
+
+| $I$       | $o=\pi(i)$ | $\Phi$     | $\Mu_b$   |
+| --------- | ---------- | ---------- | --------- |
+| $i_1$     | $o_1$      | $\omega_1$ | $m_1$     |
+| ...       | ...        | ...        | ...       |
+| $i_k$     | $o_k$      | $\omega_k$ | $m_k$     |
+|           |            |            |
+| $i_{k+1}$ | $o_{k+1}$  |            | $m_{k+1}$ |
+| ...       | ...        |            | ...       |
+| $i_{n}$   | $o_{n}$    |            | $m_{n}$   |
+
+- $n$: Number of samples
+- $k$: Number of samples that have an oracle evaluation
+
+From this table the different parameters for the quantification methods can be computed.
 
 ## `cgeval` library
 

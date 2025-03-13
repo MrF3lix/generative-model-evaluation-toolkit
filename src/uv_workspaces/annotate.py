@@ -8,4 +8,8 @@ def main():
     args = parser.parse_args()
     print(args)
 
-    print('Annotate')
+    print('Annotate: NOT IMPLEMENTED YET')
+
+
+# Input is a table with |I|O|
+# Output is a table with |I|O|W| => Oracle Ratings

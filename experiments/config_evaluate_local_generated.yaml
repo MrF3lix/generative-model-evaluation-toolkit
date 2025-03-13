@@ -1,5 +1,5 @@
 experiment:
-  name: 'motivating_example'
+  name: 'generation_only'
   report_path: 'out'
 env:
   device: mps
@@ -17,32 +17,13 @@ model:
     - name: negative
       ratio: .3
 dataset:
-  type: hf
-  name: Sp1786/multiclass-sentiment-analysis-dataset
+  type: local_text
+  name: out/generate/2025-03-13_13-46_generation_only/dataset.json
   batch_size: 1
-  samples: 10
 classifier:
   - id: FinancialBERT
     type: transformers
     name: ahmedrachid/FinancialBERT-Sentiment-Analysis
-    output: class
-    labels: 
-      - positive
-      - neutral
-      - negative
-  - id: ollama3
-    type: ollama
-    url: http://localhost:11434/api/chat
-    name: llama3
-    output: class
-    labels: 
-      - positive
-      - neutral
-      - negative
-  - id: ollama3.2
-    type: ollama
-    url: http://localhost:11434/api/chat
-    name: llama3.2
     output: class
     labels: 
       - positive

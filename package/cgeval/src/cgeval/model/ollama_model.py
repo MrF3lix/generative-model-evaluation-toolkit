@@ -9,18 +9,22 @@ class OllamaModel(Model):
         self.cfg = cfg
 
     def generate(self, inputs):
-        payload = {
-            'model': self.cfg.model.name,
-            'messages': [
-                {
-                    'role': 'user',
-                    'content': inputs
-                }
-            ],
-            'stream': False
-        }
+        predictions = []
+        for input in inputs:
+            payload = {
+                'model': self.cfg.model.name,
+                'messages': [
+                    {
+                        'role': 'user',
+                        'content': input
+                    }
+                ],
+                'stream': False
+            }
 
-        x = requests.post(self.cfg.model.url, json=payload)
-        response = json.loads(x.text)
+            x = requests.post(self.cfg.model.url, json=payload)
+            response = json.loads(x.text)
 
-        return response['message']['content']
+            predictions.append(response['message']['content'])
+
+        return predictions
