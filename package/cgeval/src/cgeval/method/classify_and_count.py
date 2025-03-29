@@ -1,28 +1,26 @@
-from tqdm.auto import tqdm
+import numpy as np
+from collections import Counter
 
 from cgeval import QuantificationMethod
 from cgeval.report import CountReport
 
 class ClassifyAndCount(QuantificationMethod):
-    def __init__(self, cfg):
+    def __init__(self):
         super().__init__()
-        self.cfg = cfg
 
-    def eval(self, dataloader, classifier):
-        inputs = []
-        predictions = []
+    def quantify(self, inputs: np.ndarray[int], metric_ratings: np.ndarray[int], labels: list[object], oracle_ratings: np.ndarray[int] = None) -> CountReport:
+        total = len(inputs)
+        input_counts = Counter(inputs)
+        classifier_counts = Counter(metric_ratings)
 
-        for batch in tqdm(dataloader):
-            # TODO: Solve this truncation to max sequence length in another way?
-            model_input = list(map(lambda x: x[:512], batch['input']))
-            outputs = classifier.classify(model_input)
+        report = {}
+        for i in range(len(labels)):
+            id = labels[i]['id']
+            name = labels[i]['name']
 
-            inputs.extend(batch['class'])
+            report[name] = {
+                'count_inputs': input_counts[id] / total,
+                'count_metric_ratings': classifier_counts[id] / total,
+            }
 
-            if classifier.cfg.output == 'class':
-                predictions.extend(outputs)
-            if classifier.cfg.output == 'logits':
-                # TODO: note that argmax doesn't return the logits but the model returns logits that need to be converted
-                predictions.extend(outputs.logits.argmax(dim=1))
-
-        return CountReport(inputs, predictions, labels=classifier.cfg.labels)
+        return CountReport(inputs, labels, report)

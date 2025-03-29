@@ -17,16 +17,22 @@ classifier:
     name: ahmedrachid/FinancialBERT-Sentiment-Analysis
     output: class
     labels: 
-      - positive
-      - neutral
-      - negative
+      - id: 0
+        name: positive
+      - id: 1
+        name: neutral
+      - id: 2
+        name: negative
   - id: FinancialBERT_2
     type: transformers
     name: ahmedrachid/FinancialBERT-Sentiment-Analysis
     output: class
     labels: 
-      - positive
-      - neutral
-      - negative
+      - id: 0
+        name: positive
+      - id: 1
+        name: neutral
+      - id: 2
+        name: negative
 evaluation:
   method: CC

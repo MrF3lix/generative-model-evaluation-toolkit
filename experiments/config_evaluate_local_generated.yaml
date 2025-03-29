@@ -10,11 +10,14 @@ model:
   samples: 10
   base_prompt: "Generate a comment with a ### sentiment."
   labels: 
-    - name: positive
+    - id: 0
+      name: positive
       ratio: .3
-    - name: neutral
+    - id: 1
+      name: neutral
       ratio: .4
-    - name: negative
+    - id: 2
+      name: negative
       ratio: .3
 dataset:
   type: local_text
@@ -26,8 +29,22 @@ classifier:
     name: ahmedrachid/FinancialBERT-Sentiment-Analysis
     output: class
     labels: 
-      - positive
-      - neutral
-      - negative
+      - id: 0
+        name: positive
+      - id: 1
+        name: neutral
+      - id: 2
+        name: negative
+  - id: lxyuan_DistilBert
+    type: transformers
+    name: lxyuan/distilbert-base-multilingual-cased-sentiments-student
+    output: class
+    labels: 
+      - id: 0
+        name: positive
+      - id: 1
+        name: neutral
+      - id: 2
+        name: negative
 evaluation:
   method: CC

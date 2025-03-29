@@ -18,17 +18,23 @@ classifier:
     name: llama3.2
     output: class
     labels: 
-      - positive
-      - neutral
-      - negative
+      - id: 0
+        name: positive
+      - id: 1
+        name: neutral
+      - id: 2
+        name: negative
   - id: ollama3.2
     type: ollama
     url: http://localhost:11434/api/chat
     name: llama3.2
     output: class
     labels: 
-      - positive
-      - neutral
-      - negative
+      - id: 0
+        name: positive
+      - id: 1
+        name: neutral
+      - id: 2
+        name: negative
 evaluation:
   method: CC

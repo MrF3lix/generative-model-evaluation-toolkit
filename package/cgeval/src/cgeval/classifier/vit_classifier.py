@@ -1,5 +1,6 @@
-
 import torch
+import numpy as np
+from tqdm.auto import tqdm
 from transformers import ViTFeatureExtractor, ViTForImageClassification
 
 from cgeval import Classifier
@@ -12,9 +13,13 @@ class ViTClassifier(Classifier):
         self.feature_extractor = ViTFeatureExtractor.from_pretrained(cfg.feature_extractor)
         self.model = ViTForImageClassification.from_pretrained(cfg.name)
 
-    def classify(self, inputs):
-        with torch.no_grad():
-            inputs = self.feature_extractor(images=inputs, return_tensors="pt")
-            outputs = self.model(**inputs)
+    def classify(self, dataloader):
+        metric_ratings = []
+        for batch in tqdm(dataloader):
+            model_input = list(map(lambda x: x, batch['input']))
+            with torch.no_grad():
+                inputs = self.feature_extractor(images=model_input, return_tensors="pt")
+                outputs = self.model(**inputs)
+                metric_ratings.extend(outputs)
 
-        return outputs
+        return np.array(metric_ratings)

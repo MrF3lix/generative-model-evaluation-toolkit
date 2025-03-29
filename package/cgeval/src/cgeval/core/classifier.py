@@ -1,7 +1,7 @@
-from abc import ABC, abstractmethod, abstractproperty
+from abc import ABC, abstractmethod
 
 class Classifier(ABC):
     @abstractmethod
-    def classify(self, inputs: object) -> object:
+    def classify(self, dataloader: object) -> object:
         pass
  

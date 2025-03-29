@@ -12,6 +12,7 @@ def get_labels_and_distributions(cfg):
     for label in cfg.model.labels:
         name = label['name']
         labels[name] = {
+            'id': label['id'],
             'name': name,
             # TODO: This is very optimistic, better would be to sum up all the ratios and distribute it correctly
             'count': int(cfg.model.samples * label['ratio'])

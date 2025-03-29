@@ -10,9 +10,12 @@ model:
   samples: 10
   base_prompt: "Generate a comment with a ### sentiment."
   labels: 
-    - name: positive
+    - id: 0
+      name: positive
       ratio: .3
-    - name: neutral
+    - id: 1
+      name: neutral
       ratio: .4
-    - name: negative
+    - id: 2
+      name: negative
       ratio: .3

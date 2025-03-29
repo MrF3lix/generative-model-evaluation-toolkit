@@ -1,41 +1,24 @@
 import json
 from prettytable import PrettyTable
-from collections import Counter
 
 from cgeval import Report
 
 class CountReport(Report):
-    def __init__(self, inputs, predictions, labels):
-        self.report = {}
+    def __init__(self, inputs, labels, report):
         self.inputs = inputs
-        self.predictions = predictions
         self.labels = labels
-
-        self.compute()
-
-    def compute(self):
-        input_counts = Counter(self.inputs)
-        classifier_counts = Counter(self.predictions)
-
-        for i in range(len(self.labels)):
-            label = self.labels[i]
-
-            self.report[label] = {
-                'input_counts': input_counts[label],
-                'classifier_counts': classifier_counts[label],
-            }
-
-        return self.report
+        self.report = report
     
     def __str__(self):
-        t = PrettyTable(['Label', 'Input Counts', 'Classifier Counts'])
+        t = PrettyTable(['Label', 'Input Prevalence', 'Metric Rating Prevalence'])
         t.align["Support"] = "r"
         
         for label in self.labels:
+            name = label['name']
             t.add_row([
-                label,
-                self.report[label]['input_counts'],
-                self.report[label]['classifier_counts'],
+                name,
+                self.report[name]['count_inputs'],
+                self.report[name]['count_metric_ratings'],
             ], divider=True)
 
         return str(t)
