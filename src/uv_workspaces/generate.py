@@ -14,7 +14,6 @@ def get_labels_and_distributions(cfg):
         labels[name] = {
             'id': label['id'],
             'name': name,
-            # TODO: This is very optimistic, better would be to sum up all the ratios and distribute it correctly
             'count': int(cfg.model.samples * label['ratio'])
         }
 
@@ -40,12 +39,18 @@ def main():
     labels = get_labels_and_distributions(cfg)
 
     dataset = []
-    for name, label in tqdm(labels.items()):
+    for name, label in labels.items():
+        progress_bar = tqdm(total=cfg.model.samples)
+        progress_bar.set_description(f"Generate samples for label {name}")
+
         for _ in range(label['count']):
+            progress_bar.update(1)
+
             prompt = cfg.model.base_prompt.replace('###', name)
             output = model.generate([prompt])
 
             dataset.append({
+                'id': abs(hash(output)) % (10 ** 8),
                 'input': name,
                 'output': output
             })

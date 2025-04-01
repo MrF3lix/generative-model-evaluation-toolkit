@@ -20,7 +20,7 @@ class MultiClassClassificationReport(Report):
         t.align["CM"] = "l"
         
         for label in self.labels:
-            name = label['name']
+            name = label.name
             t.add_row([
                 name,
                 self.report[name]['precision'],

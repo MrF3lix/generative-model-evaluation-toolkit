@@ -1,6 +1,5 @@
 import json
 import requests
-import numpy as np
 from tqdm.auto import tqdm
 
 from cgeval import Classifier
@@ -13,10 +12,11 @@ class OllamaClassifier(Classifier):
     def classify(self, dataloader):
         metric_ratings = []
         for batch in tqdm(dataloader):
-            model_input = list(map(lambda x: x[:512], batch['input']))
-            for input in model_input:
+            for input in batch:
                 # TODO: Make sure that the base prompt is configurable
-                content = f"Classify this text and assign it one of the following sentiment classes: {self.cfg.labels}. Only respond with one of the classes nothing else. [TEXT]{input}[/TEXT]"
+
+                label_names = list(map(lambda l: l['name'], self.cfg.labels))
+                content = f"Classify this text and assign it one of the following sentiment classes: {label_names}. Only respond with one of the classes nothing else. [TEXT]{input['output'][:512]}[/TEXT]"
 
                 payload = {
                     'model': self.cfg.name,
@@ -33,6 +33,12 @@ class OllamaClassifier(Classifier):
                 response = json.loads(x.text)
 
                 # TODO: Find a better way to extract the correct label from the response
-                metric_ratings.append(response['message']['content'].replace('[', '').replace(']', ''))
+                predicted_label = response['message']['content'].replace('[', '').replace(']', '').replace("'", '').lower()
 
-        return np.array(metric_ratings)
+                metric_ratings.append({
+                    **input,
+                    'metric': predicted_label
+                })
+
+
+        return metric_ratings

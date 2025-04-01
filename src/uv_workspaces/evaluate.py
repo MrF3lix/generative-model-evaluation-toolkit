@@ -1,26 +1,12 @@
 import argparse
-import numpy as np
+import json
 from omegaconf import OmegaConf
 from pathlib import Path
 from datetime import datetime
-from tqdm.auto import tqdm
+from torch.utils.data import DataLoader
 
-from cgeval.method import ClassifyAndCount, StandardClassification
-from cgeval.dataset import HuggingfaceDataset, LocalTextDataset
 from cgeval.classifier import OllamaClassifier, TransformersClassifier
-
-
-def load_evaluation_method(cfg):
-    if cfg.evaluation.method == 'CC':
-        return ClassifyAndCount()
-    elif cfg.evaluation.method == 'Classification':
-        return StandardClassification()
-
-def load_dataset(cfg):
-    if cfg.dataset.type == 'hf':
-        return HuggingfaceDataset(cfg, column_mapping={'text': 'input', 'sentiment': 'class'})
-    elif cfg.dataset.type == 'local_text':
-        return LocalTextDataset(cfg, column_mapping={'output': 'input', 'input': 'class'})
+from cgeval.rating import Ratings, Observation, Label
 
 def load_classifiers(cfg):
     classifiers = []
@@ -29,10 +15,21 @@ def load_classifiers(cfg):
             classifier = TransformersClassifier(classifier_cfg)
         elif classifier_cfg.type == 'ollama':
             classifier = OllamaClassifier(classifier_cfg)
-
         classifiers.append(classifier)
 
     return classifiers
+
+def collate(l):
+    return list(map(lambda o: o.__dict__, l))
+
+def load_ratings(cfg, labels) -> Ratings:
+    with open(cfg.annotate.out, 'r') as f:
+        dataset = json.load(f)
+
+    observations = list(map(lambda i: Observation(**i), dataset))
+    labels = list(map(lambda l: Label(**l), labels))
+
+    return Ratings(labels=labels, observations=observations)
 
 def main():
     parser = argparse.ArgumentParser(description="A toolkit for robust evaluation of generative models.")
@@ -50,28 +47,12 @@ def main():
         OmegaConf.save(cfg, f)
 
     classifiers = load_classifiers(cfg)
-    method = load_evaluation_method(cfg)
-    dataset = load_dataset(cfg)
-    dataloader = dataset.load()
 
     for classifier in classifiers:
-        # TODO: Think of where this conversion needs to take place? Is this the responsibility of the model?
-        label_name_to_id = np.vectorize(lambda m: next((l['id'] for l in classifier.cfg.labels if l['name'] == m), None))
-
-        inputs = dataloader.dataset['class']
-        inputs = label_name_to_id(inputs)
-
-        metric_ratings = classifier.classify(dataloader)
-        metric_ratings = label_name_to_id(metric_ratings)
-
-        report = method.quantify(
-            inputs=inputs,
-            metric_ratings=metric_ratings,
-            oracle_ratings=inputs,
-            labels=classifier.cfg.labels
-        )
-
-        report.save(f"{report_path}/cls_report_{classifier.cfg.id}.json")
-        
         print(classifier.cfg.id)
-        print(report)
+        ratings = load_ratings(cfg, classifier.cfg.labels)
+        dataloader = DataLoader(ratings.observations, batch_size=cfg.dataset.batch_size, shuffle=False, collate_fn=collate)
+        dataset = classifier.classify(dataloader)
+
+        with open(f"{report_path}/dataset_{classifier.cfg.id}.json", 'w') as f:
+            json.dump(dataset, f, sort_keys=True, indent=2)

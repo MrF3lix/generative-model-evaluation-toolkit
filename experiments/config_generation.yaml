@@ -7,15 +7,15 @@ model:
   type: ollama
   url: http://localhost:11434/api/chat
   name: llama3
-  samples: 10
+  samples: 10_000
   base_prompt: "Generate a comment with a ### sentiment."
   labels: 
     - id: 0
       name: positive
-      ratio: .3
+      ratio: .35
     - id: 1
       name: neutral
-      ratio: .4
+      ratio: .3
     - id: 2
       name: negative
-      ratio: .3
+      ratio: .35

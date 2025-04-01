@@ -14,9 +14,14 @@ class TransformersClassifier(Classifier):
         metric_ratings = []
 
         for batch in tqdm(dataloader):
-            model_input = list(map(lambda x: x[:512], batch['input']))
+            model_input = list(map(lambda x: x['output'][:512], batch))
             output = self.pipe(model_input)
-            labels = list(map(lambda x: x['label'], output))
-            metric_ratings.extend(labels)
 
-        return np.array(metric_ratings)
+            labels = list(map(lambda x: x['label'], output))
+            for i in range(len(batch)):
+                metric_ratings.append({
+                    **batch[i],
+                    'metric': labels[i]
+                })
+
+        return metric_ratings

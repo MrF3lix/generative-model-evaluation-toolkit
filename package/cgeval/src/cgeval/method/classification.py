@@ -1,32 +1,26 @@
-import numpy as np
-from tqdm.auto import tqdm
-from sklearn.metrics import multilabel_confusion_matrix, precision_recall_fscore_support
-
 from cgeval import QuantificationMethod
 from cgeval.report import MultiClassClassificationReport
+from cgeval.rating import Ratings
 
-# TODO: Make general classification report
 class StandardClassification(QuantificationMethod):
     def __init__(self):
         super().__init__()
 
     def cm_to_dict(self, cm):
         return {
-            'TP': int(cm[0][0]),
-            'FN': int(cm[0][1]),
-            'FP': int(cm[1][0]),
-            'TN': int(cm[1][1]),
+            'TP': float(cm[1][1]),
+            'FN': float(cm[1][0]),
+            'FP': float(cm[0][1]),
+            'TN': float(cm[0][0]),
         }
-    
-    def quantify(self, inputs: np.ndarray[int], metric_ratings: np.ndarray[int], oracle_ratings: np.ndarray[int], labels: list[object]):
-        l = list(map(lambda l: l['id'], labels))
 
-        cms = multilabel_confusion_matrix(oracle_ratings, metric_ratings, labels=l)
-        prfs = precision_recall_fscore_support(oracle_ratings, metric_ratings, labels=l, average=None)
+    def quantify(self, ratings: Ratings) -> MultiClassClassificationReport:
+        cms = ratings.compute_mixture_matrix()
+        prfs = ratings.compute_precision_recall()
 
         report = {}
-        for i in range(len(labels)):
-            label = labels[i]['name']
+        for i in range(len(ratings.labels)):
+            label = ratings.labels[i].name
             cm = cms[i]
 
             report[label] = {
@@ -37,4 +31,4 @@ class StandardClassification(QuantificationMethod):
                 'support': round(int(prfs[3][i]), 2),
             }
 
-        return MultiClassClassificationReport(labels, report)
+        return MultiClassClassificationReport(ratings.labels, report)

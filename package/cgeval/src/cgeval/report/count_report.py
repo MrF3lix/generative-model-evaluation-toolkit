@@ -4,8 +4,7 @@ from prettytable import PrettyTable
 from cgeval import Report
 
 class CountReport(Report):
-    def __init__(self, inputs, labels, report):
-        self.inputs = inputs
+    def __init__(self, labels, report):
         self.labels = labels
         self.report = report
     
@@ -14,7 +13,7 @@ class CountReport(Report):
         t.align["Support"] = "r"
         
         for label in self.labels:
-            name = label['name']
+            name = label.name
             t.add_row([
                 name,
                 self.report[name]['count_inputs'],
