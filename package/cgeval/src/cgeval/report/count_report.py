@@ -4,9 +4,10 @@ from prettytable import PrettyTable
 from cgeval import Report
 
 class CountReport(Report):
-    def __init__(self, labels, report):
+    def __init__(self, labels, report, samples):
         self.labels = labels
         self.report = report
+        self.samples = samples
     
     def __str__(self):
         t = PrettyTable(['Label', 'Input Prevalence', 'Metric Rating Prevalence'])

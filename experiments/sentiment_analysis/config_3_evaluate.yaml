@@ -1,5 +1,5 @@
 experiment:
-  name: 'evaluate_only'
+  name: 'sentiment_analysis_3_evaluate'
   report_path: 'out'
 env:
   device: mps

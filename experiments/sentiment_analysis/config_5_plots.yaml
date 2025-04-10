@@ -1,14 +1,8 @@
 experiment:
-  name: 'quantify_local_bcc'
+  name: 'sentiment_analysis_4_quantify'
   report_path: 'out'
 env:
   device: mps
-annotate:
-  oracle_ratings: out/annotate/2025-03-29_14-59_generation_only/dataset.json
-dataset:
-  type: local_text
-  name: out/generate/2025-03-29_14-59_generation_only/dataset.json
-  batch_size: 1
 classifier:
   - id: FinancialBERT
     type: transformers
@@ -44,6 +38,5 @@ classifier:
         name: neutral
       - id: 2
         name: negative
-evaluation:
-  out: out/evaluate/2025-03-31_15-23_evaluate_only
-  method: BCC
+quantify:
+  out: out/quantify/2025-04-10_10-53_sentiment_analysis_4_quantify

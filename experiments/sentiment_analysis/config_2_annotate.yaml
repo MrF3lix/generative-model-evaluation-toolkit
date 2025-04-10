@@ -1,0 +1,8 @@
+experiment:
+  name: 'sentiment_analysis_2_annotate'
+  report_path: 'out'
+env:
+  device: mps
+annotate:
+  input: out/generate/2025-03-29_14-59_generation_only/dataset.json
+  out: out/annotate/2025-03-29_14-59_generation_only/dataset.json

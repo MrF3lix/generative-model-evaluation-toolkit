@@ -4,7 +4,6 @@ import numpy as np
 from omegaconf import OmegaConf
 from pathlib import Path
 from datetime import datetime
-from tqdm.auto import tqdm
 
 from cgeval.method import ClassifyAndCount, StandardClassification, BCC
 from cgeval.rating import Ratings, Label, Observation
@@ -54,11 +53,13 @@ def main():
 
     method = load_evaluation_method(cfg)
 
+    reports = []
     for classifier in cfg.classifier:
         ratings = load_ratings(cfg, classifier)
 
         report = method.quantify(ratings)
         report.save(f"{report_path}/cls_report_{classifier.id}.json")
+        reports.append(report)
         
         print(classifier.id)
         print(report)

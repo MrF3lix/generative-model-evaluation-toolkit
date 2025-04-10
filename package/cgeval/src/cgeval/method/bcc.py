@@ -1,14 +1,13 @@
 import numpyro
 import jax
 import jax.numpy as jnp
-import arviz as az
 import numpy as np
 from collections import Counter
 from numpyro import infer
 from numpyro import distributions as dist
 
 from cgeval import QuantificationMethod
-from cgeval.report import CountReport
+from cgeval.report import BccReport
 from cgeval.rating import Ratings
 
 RANDOM_SEED = 0xdeadbeef
@@ -17,27 +16,38 @@ class BCC(QuantificationMethod):
     def __init__(self):
         super().__init__()
 
-    def quantify(self, ratings: Ratings) -> CountReport:
+    def quantify(self, ratings: Ratings) -> BccReport:
         n_classes = ratings.get_label_count()
         mu = ratings.compute_mixture_matrix()
 
         oracle = ratings.get_oracle_ratings()
         metric = ratings.get_metric_ratings()
 
-        oracle_ratings = np.array(list(Counter(oracle).items()))[:,1][0:n_classes].astype(int)
-        metric_ratings = np.array(list(Counter(metric).items()))[:,1][0:n_classes].astype(int)
+        oracle_ratings = np.array(sorted(Counter(oracle).items()))[:,1][0:n_classes].astype(int)
+        metric_ratings = np.array(sorted(Counter(metric).items()))[:,1][0:n_classes].astype(int)
 
         samples = self.mcmm_sampling(mu, oracle_ratings, metric_ratings)
 
-        # TODO: Collect samples
-        # TODO: For each key in samples and each item in 
-        report_data = {}
-        for key in samples.keys():
-            for col_idx in range(n_classes):
-                s = samples[key][:,col_idx]
+        total = len(ratings)
+        input_counts = ratings.compute_inputs_counts()
+        metric_counts = ratings.compute_metric_rating_counts()
 
-        print(s)
-        return None
+        report = {}
+        for label in ratings.labels:
+            id = label.id
+            name = label.name
+
+            s = samples['p_true'][:,id]
+            report[name] = {
+                'count_inputs': input_counts[id] / total,
+                'count_metric_ratings': metric_counts[id] / total,
+                f'p_true_mean': round(float(s.mean()), 4),
+                f'p_true_std': round(float(s.std()), 4),
+                f'p_true_5': round(float(np.quantile(s, 0.05)), 4),
+                f'p_true_95': round(float(np.quantile(s, 0.95)), 4)
+            }
+
+        return BccReport(ratings.labels, report, samples)
 
     def mcmm_sampling(self, mu_data, oracle_data, metric_data):
 
@@ -72,8 +82,6 @@ class BCC(QuantificationMethod):
         )
 
         sampler.run(jax.random.PRNGKey(RANDOM_SEED))
-        sampler.print_summary()
-
         samples = sampler.get_samples(group_by_chain=False)
 
         return samples

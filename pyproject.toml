@@ -7,6 +7,7 @@ requires-python = ">=3.11"
 dependencies = [
     "cgeval",
     "ipykernel>=6.29.5",
+    "mpltern>=1.0.4",
     "omegaconf>=2.3.0",
     "pytest>=8.3.5",
     "torch>=2.6.0",
@@ -17,6 +18,7 @@ generate = "uv_workspaces.generate:main"
 annotate = "uv_workspaces.annotate:main"
 evaluate = "uv_workspaces.evaluate:main"
 quantify = "uv_workspaces.quantify:main"
+plot = "uv_workspaces.plot:main"
 
 [tool.uv.workspace]
 members = ["package/cgeval"]

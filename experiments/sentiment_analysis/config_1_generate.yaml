@@ -1,5 +1,5 @@
 experiment:
-  name: 'generation_only'
+  name: 'sentiment_analysis_1_generate'
   report_path: 'out'
 env:
   device: mps

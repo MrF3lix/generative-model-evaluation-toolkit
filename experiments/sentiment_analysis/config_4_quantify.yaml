@@ -1,16 +1,8 @@
 experiment:
-  name: 'motivating_example'
+  name: 'sentiment_analysis_4_quantify'
   report_path: 'out'
 env:
   device: mps
-model:
-  type: ollama
-  url: http://localhost:11434/api/chat
-  name: llama3.2
-dataset:
-  type: hf
-  name: Sp1786/multiclass-sentiment-analysis-dataset
-  batch_size: 25
 classifier:
   - id: FinancialBERT
     type: transformers
@@ -23,10 +15,9 @@ classifier:
         name: neutral
       - id: 2
         name: negative
-  - id: ollama3
-    type: ollama
-    url: http://localhost:11434/api/chat
-    name: llama3
+  - id: lxyuan_DistilBert
+    type: transformers
+    name: lxyuan/distilbert-base-multilingual-cased-sentiments-student
     output: class
     labels: 
       - id: 0
@@ -48,4 +39,5 @@ classifier:
       - id: 2
         name: negative
 evaluation:
-  method: CC
+  out: out/evaluate/2025-04-01_14-07_sentiment_analysis_3_evaluate
+  method: BCC
