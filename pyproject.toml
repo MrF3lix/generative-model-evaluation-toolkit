@@ -9,6 +9,7 @@ dependencies = [
     "ipykernel>=6.29.5",
     "mpltern>=1.0.4",
     "omegaconf>=2.3.0",
+    "prodigy>=1.18.1",
     "pytest>=8.3.5",
     "torch>=2.6.0",
 ]

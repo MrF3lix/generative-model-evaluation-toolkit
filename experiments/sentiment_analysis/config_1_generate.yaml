@@ -5,8 +5,8 @@ env:
   device: mps
 model:
   type: ollama
-  url: http://localhost:11434/api/chat
-  name: llama3
+  url: http://sanjose.zhaw.ch:8648/api/chat
+  name: llama2
   samples: 10_000
   base_prompt: "Generate a comment with a ### sentiment."
   labels: 
@@ -19,3 +19,5 @@ model:
     - id: 2
       name: negative
       ratio: .35
+generate:
+  input: out/setup/dataset.json
