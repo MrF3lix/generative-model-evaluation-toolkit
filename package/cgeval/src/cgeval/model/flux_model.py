@@ -13,9 +13,7 @@ class FluxModel(Model):
         self.report_path = f'{report_path}/img'
         Path(self.report_path).mkdir(parents=True, exist_ok=True)
 
-        self.pipe = FluxPipeline.from_pretrained(cfg.model.name, torch_dtype=torch.bfloat16)
-        self.pipe.enable_model_cpu_offload() #save some VRAM by offloading the model to CPU. Remove this if you have enough GPU power
-
+        self.pipe = FluxPipeline.from_pretrained(cfg.model.name, torch_dtype=torch.bfloat16).to(cfg.env.device)
 
 
     def generate(self, id, inputs):

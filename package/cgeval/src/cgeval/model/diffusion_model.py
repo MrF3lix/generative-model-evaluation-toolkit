@@ -13,11 +13,8 @@ class DiffusionModel(Model):
         Path(self.report_path).mkdir(parents=True, exist_ok=True)
 
         pipeline = StableDiffusion3Pipeline.from_pretrained(
-            cfg.model.name, 
-            torch_dtype=torch.bfloat16
+            cfg.model.name
         ).to(cfg.env.device)
-
-        pipeline.enable_model_cpu_offload()
 
         self.pipe = pipeline
 
@@ -25,6 +22,8 @@ class DiffusionModel(Model):
     def generate(self, id, inputs):
         output = self.pipe(
             prompt=inputs,
+            height=512,
+            width=512,
             num_inference_steps=40,
             guidance_scale=4.5,
             max_sequence_length=512,

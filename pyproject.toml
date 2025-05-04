@@ -3,7 +3,7 @@ name = "evaluation_toolkit"
 version = "0.1.0"
 description = "A toolkit for robust evaluation of generative models."
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.10"
 dependencies = [
     "accelerate>=1.6.0",
     "cgeval",

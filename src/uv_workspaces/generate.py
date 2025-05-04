@@ -6,7 +6,7 @@ from pathlib import Path
 from datetime import datetime
 from tqdm.auto import tqdm
 
-from cgeval.model import OllamaModel, DiffusionModel
+from cgeval.model import OllamaModel, DiffusionModel, FluxModel,StableCascadeModel
 
 def load_dataset(path):
     if not Path(path).is_file():
@@ -19,10 +19,14 @@ def load_dataset(path):
 def load_model(cfg, report_path):
     if cfg.model.type == 'ollama':
         return OllamaModel(cfg)
-    if cfg.model.type == 'diffuision':
-        return DiffusionModel(cfg, f'{report_path}/img')
+    if cfg.model.type == 'diffusion':
+        return DiffusionModel(cfg, report_path)
     if cfg.model.type == 'flux':
-        return DiffusionModel(cfg, f'{report_path}/img')
+        return FluxModel(cfg, report_path)
+    if cfg.model.type == 'stable-cascade':
+        return StableCascadeModel(cfg, report_path)
+
+    raise f"Model type {cfg.model.type} is not supported"
 
 def generate(cfg, report_path):
     model = load_model(cfg, report_path)

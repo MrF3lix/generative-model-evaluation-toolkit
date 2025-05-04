@@ -2,9 +2,10 @@ experiment:
   name: 'animal_detection'
   report_path: 'out'
 env:
-  device: mps
+  device: cuda
 model:
-  type: 'diffusion'
-  name: 'stabilityai/stable-diffusion-3.5-medium'
+  type: 'stable-cascade'
+  name: 'stabilityai/stable-cascade'
+  prior: 'stabilityai/stable-cascade-prior'
 generate:
   input: out/setup/dataset_animal-images.json

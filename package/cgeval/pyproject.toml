@@ -3,7 +3,7 @@ name = "cgeval"
 version = "0.1.0"
 description = "A library designed for robust evaluation of generative models by applying quantification methods to correct classifier bias."
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.10"
 dependencies = [
     "arviz>=0.21.0",
     "datasets>=3.3.2",
