@@ -14,7 +14,7 @@ class TransformersLanguageModel(Model):
 
 
     # TODO: This implementation is untested
-    def generate(self, inputs):
+    def generate(self, id, inputs):
         instruction = f"<s>[INST]{inputs} [/INST]"
 
         # model_inputs = self.tokenizer.encode(instruction)

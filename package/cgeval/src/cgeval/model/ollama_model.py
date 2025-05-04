@@ -8,7 +8,7 @@ class OllamaModel(Model):
         super().__init__()
         self.cfg = cfg
 
-    def generate(self, inputs):
+    def generate(self, id, inputs):
         predictions = []
         for input in inputs:
             payload = {

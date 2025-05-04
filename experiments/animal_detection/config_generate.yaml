@@ -1,0 +1,10 @@
+experiment:
+  name: 'animal_detection'
+  report_path: 'out'
+env:
+  device: mps
+model:
+  type: 'diffusion'
+  name: 'stabilityai/stable-diffusion-3.5-medium'
+generate:
+  input: out/setup/dataset_animal-images.json

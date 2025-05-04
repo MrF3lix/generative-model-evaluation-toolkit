@@ -5,12 +5,14 @@ description = "A toolkit for robust evaluation of generative models."
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
+    "accelerate>=1.6.0",
     "cgeval",
     "ipykernel>=6.29.5",
     "mpltern>=1.0.4",
     "omegaconf>=2.3.0",
-    "prodigy>=1.18.1",
+    "protobuf>=6.30.2",
     "pytest>=8.3.5",
+    "sentencepiece>=0.2.0",
     "torch>=2.6.0",
 ]
 

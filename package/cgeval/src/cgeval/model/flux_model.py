@@ -1,10 +1,11 @@
 import torch
-from diffusers import StableDiffusion3Pipeline
+from diffusers import FluxPipeline
+
 from pathlib import Path
 
 from cgeval import Model
 
-class DiffusionModel(Model):
+class FluxModel(Model):
     def __init__(self, cfg, report_path):
         super().__init__()
         self.cfg = cfg
@@ -12,22 +13,20 @@ class DiffusionModel(Model):
         self.report_path = f'{report_path}/img'
         Path(self.report_path).mkdir(parents=True, exist_ok=True)
 
-        pipeline = StableDiffusion3Pipeline.from_pretrained(
-            cfg.model.name, 
-            torch_dtype=torch.bfloat16
-        ).to(cfg.env.device)
+        self.pipe = FluxPipeline.from_pretrained(cfg.model.name, torch_dtype=torch.bfloat16)
+        self.pipe.enable_model_cpu_offload() #save some VRAM by offloading the model to CPU. Remove this if you have enough GPU power
 
-        pipeline.enable_model_cpu_offload()
-
-        self.pipe = pipeline
 
 
     def generate(self, id, inputs):
         output = self.pipe(
-            prompt=inputs,
-            num_inference_steps=40,
-            guidance_scale=4.5,
+            inputs,
+            height=512,
+            width=512,
+            guidance_scale=3.5,
+            num_inference_steps=50,
             max_sequence_length=512,
+            generator=torch.Generator(self.cfg.env.device).manual_seed(0)
         )
         output_names = []
         for idx, image in enumerate(output.images):
