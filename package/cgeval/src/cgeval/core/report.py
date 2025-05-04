@@ -2,10 +2,13 @@ import json
 import numpy as np
 from abc import ABC, abstractmethod
 
-class Report(ABC):
+class Report(dict):
     @abstractmethod
     def __str__(self):
         pass
+    
+    def __getattr__(self, attr):
+        return self[attr]
 
     @abstractmethod
     def toJSON(self):

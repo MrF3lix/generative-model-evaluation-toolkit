@@ -1,52 +1,52 @@
 experiment:
-  name: 'motivating_example'
+  name: 'sentiment_analysis_llama2'
   report_path: 'out'
 env:
   device: mps
-model:
-  type: ollama
-  url: http://localhost:11434/api/chat
-  name: llama3
-  samples: 10
-  base_prompt: "Generate a comment with a ### sentiment."
-  labels: 
-    - name: positive
-      ratio: .3
-    - name: neutral
-      ratio: .4
-    - name: negative
-      ratio: .3
+annotate:
+  out: out/annotate/2025-04-24_llama2/dataset.json
 dataset:
-  type: hf
-  name: Sp1786/multiclass-sentiment-analysis-dataset
-  batch_size: 1
-  samples: 10
+  batch_size: 10
 classifier:
   - id: FinancialBERT
     type: transformers
     name: ahmedrachid/FinancialBERT-Sentiment-Analysis
     output: class
     labels: 
-      - positive
-      - neutral
-      - negative
-  - id: ollama3
-    type: ollama
-    url: http://localhost:11434/api/chat
-    name: llama3
+      - id: 0
+        name: positive
+      - id: 1
+        name: neutral
+      - id: 2
+        name: negative
+  - id: lxyuan_DistilBert
+    type: transformers
+    name: lxyuan/distilbert-base-multilingual-cased-sentiments-student
     output: class
     labels: 
-      - positive
-      - neutral
-      - negative
+      - id: 0
+        name: positive
+      - id: 1
+        name: neutral
+      - id: 2
+        name: negative
   - id: ollama3.2
     type: ollama
     url: http://localhost:11434/api/chat
     name: llama3.2
     output: class
     labels: 
-      - positive
-      - neutral
-      - negative
-evaluation:
-  method: CC
+      - id: 0
+        name: positive
+      - id: 1
+        name: neutral
+      - id: 2
+        name: negative
+evaluate:
+  out: evaluate
+  method: BCC
+quantify:
+  out: quantify
+  comparison: binary
+plot:
+  out: plot

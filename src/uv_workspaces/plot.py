@@ -3,17 +3,35 @@ from omegaconf import OmegaConf
 from pathlib import Path
 from datetime import datetime
 
-from cgeval.report import GenericReport, plot_triangle
+from cgeval.report import GenericReport, plot_triangle, plot_binary
 
-def load_reports(cfg):
+def load_reports(cfg, report_path):
     reports = []
 
     for classifier in cfg.classifier:
         report = GenericReport()
-        report.load(f"{cfg.quantify.out}/cls_report_{classifier.id}.json")
+        report.load(f"{report_path}/{cfg.quantify.out}/cls_report_{classifier.id}.json")
         reports.append(report)
 
     return reports
+
+def plot(cfg, report_path):
+
+    reports = load_reports(cfg, report_path)
+
+    out = f"{report_path}/{cfg.plot.out}"
+    Path(out).mkdir(parents=True, exist_ok=True)
+
+    if cfg.quantify.comparison == 'binary':
+        fig_obs = plot_binary(reports, cfg.classifier, 'alpha_obs', 'Observed Distribution')
+        fig_obs.savefig(f"{out}/observed_distribution.png", bbox_inches='tight')
+
+        fig = plot_binary(reports, cfg.classifier, 'alpha', 'Corrected Distribution')
+        fig.savefig(f"{out}/corrected_distribution.png", bbox_inches='tight')
+    else:
+        fig = plot_triangle(cfg.classifier[0].labels, reports, cfg.classifier, ['p_true'], desired_dist=[0.35, 0.3, 0.35])
+
+        fig.savefig(f"{out}/ternary_plot.png")
 
 def main():
     parser = argparse.ArgumentParser(description="A toolkit for robust evaluation of generative models.")
@@ -30,7 +48,4 @@ def main():
     with open(f"{report_path}/config.yaml", 'w') as f:
         OmegaConf.save(cfg, f)
 
-    reports = load_reports(cfg)
-
-    fig = plot_triangle(cfg.classifier[0].labels, reports, cfg.classifier, ['p_true'])
-    fig.savefig(f"{report_path}/ternary_plot.png")
+    plot(cfg, report_path)

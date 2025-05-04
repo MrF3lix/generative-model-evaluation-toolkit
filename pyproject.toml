@@ -21,6 +21,8 @@ evaluate = "uv_workspaces.evaluate:main"
 quantify = "uv_workspaces.quantify:main"
 plot = "uv_workspaces.plot:main"
 
+pipeline = "uv_workspaces.all:main"
+
 [tool.uv.workspace]
 members = ["package/cgeval"]
 

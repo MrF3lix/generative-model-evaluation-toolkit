@@ -13,20 +13,24 @@ from cgeval.rating import Ratings
 RANDOM_SEED = 0xdeadbeef
 
 class BCC(QuantificationMethod):
-    def __init__(self):
+    def __init__(self, cfg):
+        self.cfg = cfg
         super().__init__()
 
     def quantify(self, ratings: Ratings) -> BccReport:
-        n_classes = ratings.get_label_count()
+        n_classes = 2 if self.cfg.quantify.comparison == 'binary' else ratings.get_label_count()
         mu = ratings.compute_mixture_matrix()
 
         oracle = ratings.get_oracle_ratings()
         metric = ratings.get_metric_ratings()
 
+        # TODO: Investigate 
+        metric = [x for x in metric if x is not None] 
+
         oracle_ratings = np.array(sorted(Counter(oracle).items()))[:,1][0:n_classes].astype(int)
         metric_ratings = np.array(sorted(Counter(metric).items()))[:,1][0:n_classes].astype(int)
 
-        samples = self.mcmm_sampling(mu, oracle_ratings, metric_ratings)
+        samples = self.mcmm_sampling(mu, oracle_ratings, metric_ratings, ratings)
 
         total = len(ratings)
         input_counts = ratings.compute_inputs_counts()
@@ -37,19 +41,76 @@ class BCC(QuantificationMethod):
             id = label.id
             name = label.name
 
-            s = samples['p_true'][:,id]
-            report[name] = {
-                'count_inputs': input_counts[id] / total,
-                'count_metric_ratings': metric_counts[id] / total,
-                f'p_true_mean': round(float(s.mean()), 4),
-                f'p_true_std': round(float(s.std()), 4),
-                f'p_true_5': round(float(np.quantile(s, 0.05)), 4),
-                f'p_true_95': round(float(np.quantile(s, 0.95)), 4)
-            }
+            if self.cfg.quantify.comparison == 'binary':
+                s = samples['alpha']
+
+                if id == 0:
+                    report[name] = {
+                        'count_inputs': input_counts[id] / total,
+                        'count_metric_ratings': metric_counts[id] / total,
+                        'oracle_ratings': oracle.tolist(),
+                        f'p_true_mean': round(float(1 - s.mean()), 4),
+                        f'p_true_std': round(float(s.std()), 4),
+                        f'p_true_5': round(float(1 - np.quantile(s, 0.95)), 4),
+                        f'p_true_95': round(float(1 - np.quantile(s, 0.05)), 4)
+                    }
+                else:
+                    report[name] = {
+                        'count_inputs': input_counts[id] / total,
+                        'count_metric_ratings': metric_counts[id] / total,
+                        'oracle_ratings': oracle.tolist(),
+                        f'p_true_mean': round(float(s.mean()), 4),
+                        f'p_true_std': round(float(s.std()), 4),
+                        f'p_true_5': round(float(np.quantile(s, 0.05)), 4),
+                        f'p_true_95': round(float(np.quantile(s, 0.95)), 4)
+                    }
+
+            else:
+                s = samples['p_true'][:,id]
+                report[name] = {
+                    'count_inputs': input_counts[id] / total,
+                    'count_metric_ratings': metric_counts[id] / total,
+                    f'p_true_mean': round(float(s.mean()), 4),
+                    f'p_true_std': round(float(s.std()), 4),
+                    f'p_true_5': round(float(np.quantile(s, 0.05)), 4),
+                    f'p_true_95': round(float(np.quantile(s, 0.95)), 4)
+                }
 
         return BccReport(ratings.labels, report, samples)
 
-    def mcmm_sampling(self, mu_data, oracle_data, metric_data):
+    def mcmm_sampling(self, mu_data, oracle_data, metric_data, ratings):
+        def binar_model_fn():
+            alpha = numpyro.sample(
+                "alpha",
+                dist.Beta(oracle_data[1] + 1, oracle_data[0] + 1)
+            )
+
+            tpr_data = ratings.get_tpr()
+            tpr_data = np.array(sorted(Counter(tpr_data).items()))[:,1][0:2].astype(int)
+
+            tpr = numpyro.sample(
+                "tpr",
+                dist.Beta(tpr_data[1] + 1, tpr_data[0] + 1)
+            )
+
+            fpr_data = ratings.get_fpr()
+            fpr_data = np.array(sorted(Counter(fpr_data).items()))[:,1][0:2].astype(int)
+
+            fpr = numpyro.sample(
+                "fpr",
+                dist.Beta(fpr_data[1] + 1, fpr_data[0] + 1)
+            )
+
+            alpha_obs = numpyro.deterministic(
+                "alpha_obs",
+                alpha*(tpr - fpr) + fpr
+            )
+
+            numpyro.sample(
+                "obs",
+                dist.Binomial(total_count=metric_data.sum(), probs=alpha_obs),
+                obs=metric_data[1],
+            )
 
         def model_fn():
             mu_cols = []
@@ -74,7 +135,7 @@ class BCC(QuantificationMethod):
             )
 
         sampler = infer.MCMC(
-            infer.NUTS(model_fn),
+            infer.NUTS(binar_model_fn if self.cfg.quantify.comparison == 'binary' else model_fn),
             num_warmup=2_000,
             num_samples=10_000,
             num_chains=5,

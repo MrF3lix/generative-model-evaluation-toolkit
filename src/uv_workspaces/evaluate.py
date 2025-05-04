@@ -31,6 +31,20 @@ def load_ratings(cfg, labels) -> Ratings:
 
     return Ratings(labels=labels, observations=observations)
 
+def evaluate(cfg, report_path):
+    classifiers = load_classifiers(cfg)
+
+    for classifier in classifiers:
+        print(classifier.cfg.id)
+        ratings = load_ratings(cfg, classifier.cfg.labels)
+        dataloader = DataLoader(ratings.observations, batch_size=cfg.dataset.batch_size, shuffle=False, collate_fn=collate)
+        dataset = classifier.classify(dataloader)
+
+        out = f"{report_path}/{cfg.evaluate.out}"
+        Path(out).mkdir(parents=True, exist_ok=True)
+        with open(f"{out}/dataset_{classifier.cfg.id}.json", 'w') as f:
+            json.dump(dataset, f, sort_keys=True, indent=2)
+
 def main():
     parser = argparse.ArgumentParser(description="A toolkit for robust evaluation of generative models.")
     parser.add_argument(
@@ -46,13 +60,4 @@ def main():
     with open(f"{report_path}/config.yaml", 'w') as f:
         OmegaConf.save(cfg, f)
 
-    classifiers = load_classifiers(cfg)
-
-    for classifier in classifiers:
-        print(classifier.cfg.id)
-        ratings = load_ratings(cfg, classifier.cfg.labels)
-        dataloader = DataLoader(ratings.observations, batch_size=cfg.dataset.batch_size, shuffle=False, collate_fn=collate)
-        dataset = classifier.classify(dataloader)
-
-        with open(f"{report_path}/dataset_{classifier.cfg.id}.json", 'w') as f:
-            json.dump(dataset, f, sort_keys=True, indent=2)
+    evaluate(cfg, report_path)

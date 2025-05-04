@@ -6,7 +6,7 @@ env:
 model:
   type: ollama
   url: http://sanjose.zhaw.ch:8648/api/chat
-  name: llama2
+  name: mistral
   samples: 10_000
   base_prompt: "Generate a comment with a ### sentiment."
   labels: 
@@ -21,3 +21,4 @@ model:
       ratio: .35
 generate:
   input: out/setup/dataset.json
+  # temp: out/generate/2025-04-17_15-56_sentiment_analysis_1_generate/dataset.json

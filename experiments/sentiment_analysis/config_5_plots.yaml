@@ -1,5 +1,5 @@
 experiment:
-  name: 'sentiment_analysis_4_quantify'
+  name: 'sentiment_analysis_4_quantify_llama_3-3'
   report_path: 'out'
 env:
   device: mps
@@ -39,4 +39,4 @@ classifier:
       - id: 2
         name: negative
 quantify:
-  out: out/quantify/2025-04-10_10-53_sentiment_analysis_4_quantify
+  out: out/quantify/2025-04-24_11-41_sentiment_analysis_4_quantify

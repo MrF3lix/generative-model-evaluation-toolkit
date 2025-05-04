@@ -50,7 +50,7 @@ def main():
     # TODO: For each sample in the dataset generate the output.
 
     dataset = load_dataset(cfg.generate.input)
-    dataset_out = load_dataset(f"{report_path}/dataset.json")
+    dataset_out = load_dataset(cfg.generate.temp) if 'temp' in cfg.generate else []
 
     for sample in tqdm(dataset):
 

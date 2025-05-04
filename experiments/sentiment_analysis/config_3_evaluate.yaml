@@ -1,10 +1,10 @@
 experiment:
-  name: 'sentiment_analysis_3_evaluate'
-  report_path: 'out'
+  name: 'sentiment_analysis_3_evaluate_mistral'
+  report_path: './out'
 env:
   device: mps
 annotate:
-  out: out/annotate/2025-03-29_14-59_generation_only/dataset.json
+  out: out/annotate/2025-04-24_mistral/dataset.json
 dataset:
   batch_size: 10
 classifier:
@@ -42,3 +42,8 @@ classifier:
         name: neutral
       - id: 2
         name: negative
+evaluate:
+  out: /evaluate
+  method: BCC
+quantify:
+  out: /quantify
