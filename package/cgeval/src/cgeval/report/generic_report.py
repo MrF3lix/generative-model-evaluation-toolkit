@@ -8,7 +8,7 @@ class GenericReport(Report):
         pass
     
     def __str__(self):
-        return str(self.report)
+        return str(self.samples)
     
     def toJSON(self):
         return json.dumps(

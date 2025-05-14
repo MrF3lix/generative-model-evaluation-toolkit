@@ -1,10 +1,10 @@
 experiment:
-  name: 'sentiment_analysis_llama2'
+  name: 'sentiment_analysis_llama3-3'
   report_path: 'out'
 env:
   device: mps
 annotate:
-  out: out/annotate/2025-05-09_llama2/dataset.json
+  out: out/annotate/2025-05-09_llama-3-3/dataset.json
 dataset:
   batch_size: 10
 classifier:

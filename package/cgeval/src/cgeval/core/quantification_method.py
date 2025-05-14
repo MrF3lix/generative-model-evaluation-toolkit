@@ -44,13 +44,15 @@ class QuantificationMethod(ABC):
     #     pass
 
     @abstractmethod
-    def quantify(self, ratings: Ratings) -> Report:
+    def quantify(self, ratings: Ratings, classifier: str) -> Report:
          """Executes the quantification method
 
         Parameters
         ---
         ratings : Ratings
             Contains the list of observations for the entire dataset.
+        classifier : str
+            Name of the classifier, used for the reporting
 
         Returns
         ---

@@ -79,7 +79,7 @@ def quantify(cfg, report_path):
         out = f"{report_path}/{cfg.quantify.out}"
         Path(out).mkdir(parents=True, exist_ok=True)
 
-        report = method.quantify(ratings)
+        report = method.quantify(ratings, classifier.id)
         report.save(f"{out}/cls_report_{classifier.id}.json")
         reports.append(report)
         

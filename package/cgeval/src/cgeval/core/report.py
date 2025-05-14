@@ -19,12 +19,10 @@ class Report(dict):
             report_data = json.load(f)
 
         self.report = report_data['report']
+        self.dist_report = report_data['dist']
         self.samples = dict(map(lambda kv: (kv[0], np.array(kv[1], dtype=np.float64)), report_data['samples'].items()))
 
     def save(self, filename):
-        data = {
-            'report': self.report,
-            'samples': dict(map(lambda kv: (kv[0], kv[1].tolist()), self.samples.items()))
-        }
+        data = self.toJSON()
         with open(filename, 'w') as f:
-            json.dump(data, f, sort_keys=True, indent=2)
+            f.write(data)

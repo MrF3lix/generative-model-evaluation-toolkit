@@ -9,6 +9,9 @@ from numpyro import distributions as dist
 from cgeval import QuantificationMethod
 from cgeval.report import BccReport
 from cgeval.rating import Ratings
+from cgeval.distribution import Beta, BetaParams
+
+numpyro.set_host_device_count(5)
 
 RANDOM_SEED = 0xdeadbeef
 
@@ -17,7 +20,7 @@ class BCC(QuantificationMethod):
         self.cfg = cfg
         super().__init__()
 
-    def quantify(self, ratings: Ratings) -> BccReport:
+    def quantify(self, ratings: Ratings, classifier: str) -> BccReport:
         n_classes = 2 if self.cfg.quantify.comparison == 'binary' else ratings.get_label_count()
         mu = ratings.compute_mixture_matrix()
 
@@ -29,8 +32,24 @@ class BCC(QuantificationMethod):
 
         oracle_ratings = np.array(sorted(Counter(oracle).items()))[:,1][0:n_classes].astype(int)
         metric_ratings = np.array(sorted(Counter(metric).items()))[:,1][0:n_classes].astype(int)
-
+        
         samples = self.mcmm_sampling(mu, oracle_ratings, metric_ratings, ratings)
+        try:
+            samples = self.mcmm_sampling(mu, oracle_ratings, metric_ratings, ratings)
+        except Exception as e:  
+            print(e) 
+            print(oracle_ratings)
+            print(metric_ratings)
+            print(sorted(Counter(oracle).items()))
+            print(sorted(Counter(metric).items()))
+
+            samples = {
+                'alpha': np.array([0]),
+                'alpha_obs': np.array([0]),
+                'p_true': np.array([np.array([0]),np.array([0]),np.array([0])])
+            }
+
+            print('Failed to run MCMM sampling')
 
         total = len(ratings)
         input_counts = ratings.compute_inputs_counts()
@@ -76,29 +95,30 @@ class BCC(QuantificationMethod):
                     f'p_true_95': round(float(np.quantile(s, 0.95)), 4)
                 }
 
-        return BccReport(ratings.labels, report, samples)
+        # HACK: only works for case where a label match exists (in binary this might be easy but how do we deal with this in a multilabel scenario)
+        oracle_ratings = report['match']['oracle_ratings']
+        a = sorted(Counter(oracle_ratings).items())[1][1] + 1
+        b = sorted(Counter(oracle_ratings).items())[0][1] + 1
+
+        return BccReport(ratings.labels, report, samples, Beta(params=BetaParams(a, b)), Beta(samples['alpha']), Beta(samples['alpha_obs']), classifier)
 
     def mcmm_sampling(self, mu_data, oracle_data, metric_data, ratings):
         def binar_model_fn():
-            alpha = numpyro.sample(
-                "alpha",
-                dist.Beta(oracle_data[1] + 1, oracle_data[0] + 1)
-            )
-
-            tpr_data = ratings.get_tpr()
-            tpr_data = np.array(sorted(Counter(tpr_data).items()))[:,1][0:2].astype(int)
+            (tn, fp, fn, tp) = ratings.compute_confusion_matrix()
 
             tpr = numpyro.sample(
                 "tpr",
-                dist.Beta(tpr_data[1] + 1, tpr_data[0] + 1)
+                dist.Beta(tp + 1, fn + 1)
             )
-
-            fpr_data = ratings.get_fpr()
-            fpr_data = np.array(sorted(Counter(fpr_data).items()))[:,1][0:2].astype(int)
-
+            
             fpr = numpyro.sample(
                 "fpr",
-                dist.Beta(fpr_data[1] + 1, fpr_data[0] + 1)
+                dist.Beta(fp + 1, tn + 1)
+            )
+
+            alpha = numpyro.sample(
+                "alpha",
+                dist.Beta(oracle_data[1] + 1, oracle_data[0] + 1)
             )
 
             alpha_obs = numpyro.deterministic(

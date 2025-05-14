@@ -14,13 +14,13 @@ def main():
     cfg = OmegaConf.load(args.config)
 
     # now = datetime.today().strftime('%Y-%m-%d_%H-%M')
-    now = "2025-04-30_15-26"
+    now = "2025-05-14"
     report_path = f"{cfg.experiment.report_path}/pipeline/{now}_{cfg.experiment.name}"
     Path(report_path).mkdir(parents=True, exist_ok=True)
 
     with open(f"{report_path}/config.yaml", 'w') as f:
         OmegaConf.save(cfg, f)
 
-    # evaluate(cfg, report_path)
-    # quantify(cfg, report_path)
+    evaluate(cfg, report_path)
+    quantify(cfg, report_path)
     plot(cfg, report_path)
