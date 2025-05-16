@@ -1,0 +1,53 @@
+experiment:
+  name: 'sentiment_analysis_cpcc_llama2'
+  report_path: 'out'
+env:
+  device: mps
+annotate:
+  out: out/annotate/2025-05-09_llama2/dataset.json
+dataset:
+  batch_size: 20
+classifier:
+  - id: FinancialBERT
+    type: transformers
+    name: ahmedrachid/FinancialBERT-Sentiment-Analysis
+    output: logits
+    labels: 
+      - id: 0
+        name: positive
+      - id: 1
+        name: neutral
+      - id: 2
+        name: negative
+  # - id: lxyuan_DistilBert
+  #   type: transformers
+  #   name: lxyuan/distilbert-base-multilingual-cased-sentiments-student
+  #   output: class
+  #   labels: 
+  #     - id: 0
+  #       name: positive
+  #     - id: 1
+  #       name: neutral
+  #     - id: 2
+  #       name: negative
+  # - id: ollama3.2
+  #   type: ollama
+  #   url: http://localhost:11434/api/chat
+  #   name: llama3.2
+  #   output: class
+  #   labels: 
+  #     - id: 0
+  #       name: positive
+  #     - id: 1
+  #       name: neutral
+  #     - id: 2
+  #       name: negative
+evaluate:
+  out: evaluate
+  method: CPCC
+quantify:
+  out: quantify
+  comparison: binary
+  regression: logistic
+plot:
+  out: plot

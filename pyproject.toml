@@ -9,6 +9,7 @@ dependencies = [
     "cgeval",
     "ipykernel>=6.29.5",
     "mpltern>=1.0.4",
+    "ollama>=0.4.8",
     "omegaconf>=2.3.0",
     "protobuf>=6.30.2",
     "pytest>=8.3.5",

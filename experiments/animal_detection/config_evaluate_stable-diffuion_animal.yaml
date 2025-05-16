@@ -1,0 +1,52 @@
+experiment:
+  name: 'animal_detection_stable-diffusion_animal'
+  report_path: 'out'
+env:
+  device: mps
+annotate:
+  out: out/annotate/2025-05-15_image_stable-diffusion/dataset_animal.json
+  image_base_path: out/annotate/2025-05-15_image_stable-diffusion/img
+dataset:
+  batch_size: 10
+classifier:
+  # - id: Yolov8
+  #   type: yolo
+  #   name: ultralytics/yolov8
+  #   file: 'yolov8n.pt'
+  #   output: class
+  #   label_task: animal
+  #   labels: 
+  #     - id: 0
+  #       name: animal_match
+  #     - id: 1
+  #       name: animal_no_match
+  # - id: DETR
+  #   type: transformers-image
+  #   name: facebook/detr-resnet-50
+  #   output: class
+  #   label_task: animal
+  #   labels: 
+  #     - id: 0
+  #       name: animal_match
+  #     - id: 1
+  #       name: animal_no_match
+  - id: LLaVA
+    type: ollama-image
+    name: llava
+    output: class
+    label_task: animal
+    url: http://localhost:11434/api/generate
+    # url: http://sanjose.zhaw.ch:8648/api/generate
+    labels: 
+      - id: 0
+        name: animal_match
+      - id: 1
+        name: animal_no_match
+evaluate:
+  out: evaluate
+  method: BCC
+quantify:
+  out: quantify
+  comparison: binary
+plot:
+  out: plot

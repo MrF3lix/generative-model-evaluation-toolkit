@@ -24,12 +24,12 @@ def load_evaluation_method(cfg):
 def label_name_to_id(name: str, labels) -> int:
     return next((l['id'] for l in labels if l['name'] == name), None)
 
-def label_match_to_id(match: str) -> int:
+def label_match_to_id(match: str, matching_label: str) -> int:
     # HACK: Why does this work for the stories?
     # return int(match == True) if match is not None else match
     # print(match)
-    return int(match == 'count_match') if match is not None else match
-    return int(match == 'animal_match') if match is not None else match
+    return int(match == matching_label) if match is not None else match
+    # return int(match == 'animal_match') if match is not None else match
 
 def extract_sentiment(input):
     m = re.search('The story should have a (.+?) sentiment', input)
@@ -80,8 +80,8 @@ def load_ratings(cfg, classifier, report_path) -> Ratings:
                 id=i['id'],
                 output=i['output'],
                 input=1,
-                oracle=label_match_to_id(i['oracle']),
-                metric=label_match_to_id(i['metric'])
+                oracle=label_match_to_id(i['oracle'], classifier.labels[0].name),
+                metric=label_match_to_id(i['metric'], classifier.labels[0].name)
             ), observations))
 
         # HACK: only for the sentiment stories
