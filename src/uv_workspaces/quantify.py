@@ -7,7 +7,7 @@ from omegaconf import OmegaConf
 from pathlib import Path
 from datetime import datetime
 
-from cgeval.method import ClassifyAndCount, StandardClassification, BCC
+from cgeval.method import ClassifyAndCount, StandardClassification, BCC, CPCC
 from cgeval.rating import Ratings, Label, Observation
 
 
@@ -16,6 +16,8 @@ def load_evaluation_method(cfg):
         return ClassifyAndCount()
     if cfg.evaluate.method == 'BCC':
         return BCC(cfg)
+    if cfg.evaluate.method == 'CPCC':
+        return CPCC(cfg)
     elif cfg.evaluate.method == 'Classification':
         return StandardClassification()
 
@@ -23,7 +25,11 @@ def label_name_to_id(name: str, labels) -> int:
     return next((l['id'] for l in labels if l['name'] == name), None)
 
 def label_match_to_id(match: str) -> int:
-    return int(match == True) if match is not None else match
+    # HACK: Why does this work for the stories?
+    # return int(match == True) if match is not None else match
+    # print(match)
+    return int(match == 'count_match') if match is not None else match
+    return int(match == 'animal_match') if match is not None else match
 
 def extract_sentiment(input):
     m = re.search('The story should have a (.+?) sentiment', input)
@@ -38,23 +44,49 @@ def load_ratings(cfg, classifier, report_path) -> Ratings:
         ratings_data = json.load(f)
 
     if cfg.quantify.comparison == 'binary':
-        df = pd.DataFrame(ratings_data)
-        df['condition'] = df['input'].apply(extract_sentiment)
 
-        df['oracle'] = df.apply(lambda r: r['oracle'] == r['condition'] if(pd.notnull(r['oracle'])) else r['oracle'], axis=1)
-        df['metric'] = df['metric'] == df['condition']
+        if classifier.output == 'logits':
+            label2id = lambda label: list(map(lambda l: l['name'], classifier.labels)).index(label)
+            
+            df = pd.DataFrame(ratings_data)
+            df['condition'] = df['input'].apply(extract_sentiment)
+            df['condition_id'] = df['condition'].apply(label2id)
+            df['oracle'] = df.apply(lambda r: r['oracle'] == r['condition'] if(pd.notnull(r['oracle'])) else r['oracle'], axis=1)
 
-        observations = df.to_dict(orient='records')
+            df['X'] = df.apply(lambda row: row['metric'][int(row['condition_id'])],axis=1)
+            df['y'] = df['oracle']
 
-        observations = list(map(lambda i: Observation(
-            id=i['id'],
-            output=i['output'],
-            input=1,
-            oracle=label_match_to_id(i['oracle']),
-            metric=label_match_to_id(i['metric'])
-        ), observations))
+            observations = df.to_dict(orient='records')
+            observations = list(map(lambda i: Observation(
+                id=i['id'],
+                output=i['output'],
+                input=i['condition_id'],
+                oracle=i['y'],
+                metric=i['X']
+            ), observations))
 
-        labels = [Label(0, 'no match'), Label(1, 'match')]
+        else:
+            df = pd.DataFrame(ratings_data)
+            # HACK: Only works with the Story Dataset
+            # df['condition'] = df['input'].apply(extract_sentiment)
+
+
+            # TODO: Does this happen on 
+            # df['oracle'] = df.apply(lambda r: r['oracle'] == r['condition'] if(pd.notnull(r['oracle'])) else r['oracle'], axis=1)
+            # df['metric'] = df['metric'] == df['condition']
+
+            observations = df.to_dict(orient='records')
+            observations = list(map(lambda i: Observation(
+                id=i['id'],
+                output=i['output'],
+                input=1,
+                oracle=label_match_to_id(i['oracle']),
+                metric=label_match_to_id(i['metric'])
+            ), observations))
+
+        # HACK: only for the sentiment stories
+        # labels = [Label(0, 'no match'), Label(1, 'match')]
+        labels = list(map(lambda l: Label(**l), classifier.labels))
     
     else:
         observations = list(map(lambda i: Observation(

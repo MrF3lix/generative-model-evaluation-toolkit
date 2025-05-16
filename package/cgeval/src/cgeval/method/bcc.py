@@ -30,8 +30,19 @@ class BCC(QuantificationMethod):
         # TODO: Investigate 
         metric = [x for x in metric if x is not None] 
 
-        oracle_ratings = np.array(sorted(Counter(oracle).items()))[:,1][0:n_classes].astype(int)
-        metric_ratings = np.array(sorted(Counter(metric).items()))[:,1][0:n_classes].astype(int)
+        # oracle_ratings = np.array(sorted(Counter(oracle).items()))[:,1][0:n_classes].astype(int)
+        # metric_ratings = np.array(sorted(Counter(metric).items()))[:,1][0:n_classes].astype(int)
+
+
+        # HACK: There's a better way
+        oracle_ratings_count = Counter(oracle)
+        oracle_ratings = np.array([oracle_ratings_count[0], oracle_ratings_count[1]])
+
+        metric_ratings_count = Counter(metric)
+        metric_ratings = np.array([metric_ratings_count[0], metric_ratings_count[1]])
+
+        print(oracle)
+        print(oracle_ratings)
         
         samples = self.mcmm_sampling(mu, oracle_ratings, metric_ratings, ratings)
         try:
@@ -95,10 +106,8 @@ class BCC(QuantificationMethod):
                     f'p_true_95': round(float(np.quantile(s, 0.95)), 4)
                 }
 
-        # HACK: only works for case where a label match exists (in binary this might be easy but how do we deal with this in a multilabel scenario)
-        oracle_ratings = report['match']['oracle_ratings']
-        a = sorted(Counter(oracle_ratings).items())[1][1] + 1
-        b = sorted(Counter(oracle_ratings).items())[0][1] + 1
+        a = int(oracle_ratings[1]) + 1
+        b = int(oracle_ratings[0]) + 1
 
         return BccReport(ratings.labels, report, samples, Beta(params=BetaParams(a, b)), Beta(samples['alpha']), Beta(samples['alpha_obs']), classifier)
 

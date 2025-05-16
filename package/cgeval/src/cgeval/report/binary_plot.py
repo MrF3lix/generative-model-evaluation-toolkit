@@ -5,6 +5,7 @@ from collections import Counter
 from scipy.stats import beta
 
 from cgeval import Report
+from cgeval.distribution import Beta
 
 @dataclass(frozen=True)
 class BetaParams:
@@ -36,9 +37,9 @@ def get_mode(a,b):
         mode = 0 if a < 1 and b >= 1 else 1 
     return mode
 
-def plot_oracle(ax, samples):
-    a = sorted(Counter(samples).items())[1][1] + 1
-    b = sorted(Counter(samples).items())[0][1] + 1
+def plot_oracle(ax, dist):
+    a = dist.params.a
+    b = dist.params.b
 
     x = np.linspace(beta.ppf(0.01, a, b), beta.ppf(0.99, a, b), 100)
     pdf = beta.pdf(x, a, b)
@@ -69,11 +70,27 @@ def plot_binary(reports: list[Report], classifiers, field, title):
     ax_1.set_title(title)
     ax_1.set_ylim(0,100)
 
-    oracle_rating_samples = np.array(vars(reports[0])['report']['match']['oracle_ratings'])
-    plot_oracle(ax_1, oracle_rating_samples)
+    # oracle_rating_samples = np.array(vars(reports[0])['report']['match']['oracle_ratings'])
+    # oracle_rating_samples = np.array(vars(reports[0])['report']['count_match']['oracle_ratings'])
+    # oracle_rating_samples = np.array(vars(reports[0])['report']['animal_match']['oracle_ratings'])
+
+    oracle_dist = vars(reports[0])['dist_report'][0]
+    oracle_dist = Beta(params=BetaParams(oracle_dist['a'],oracle_dist['b']))
+
+    plot_oracle(ax_1, oracle_dist)
 
     for idx, re in enumerate(reports):
         plot_beta(ax_1, re.samples[field], f'{classifiers[idx].id}')
 
     fig.legend(loc='upper right', title='Legend', bbox_to_anchor=(1.15, 0.85))
     return fig
+
+
+def plot_binary_distributions(distributions: list[Beta], classifiers, field, title):
+    plt.rcParams["axes.prop_cycle"] = plt.cycler("color", plt.cm.Set1.colors)
+
+    fig = plt.figure(figsize=(8, 4))
+
+    ax_1 = fig.add_subplot(1, 1, 1)
+    ax_1.set_title(title)
+    ax_1.set_ylim(0,100)

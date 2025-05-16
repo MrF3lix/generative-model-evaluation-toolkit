@@ -14,7 +14,7 @@ class Observation():
     input: int
     output: object
     oracle: int | None
-    metric: int
+    metric: float
 
 @dataclass(frozen=True)
 class Ratings():
@@ -62,6 +62,14 @@ class Ratings():
 
     def get_metric_ratings(self) -> np.ndarray[int]:
         return np.array([o.metric for o in self.observations if o.oracle is None])
+
+    def get_oracle_metric_pairs(self):
+        items = [o for o in self.observations if o.oracle is not None]
+
+        oracle_ratings = [o.oracle for o in items]
+        metric_ratings = [o.metric for o in items]
+
+        return oracle_ratings, metric_ratings
     
     def get_oracle_ratings(self) -> np.ndarray[int]:
         return np.array([o.oracle for o in self.observations if o.oracle is not None])

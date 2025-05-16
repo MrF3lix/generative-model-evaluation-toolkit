@@ -5,7 +5,7 @@ from pathlib import Path
 from datetime import datetime
 from torch.utils.data import DataLoader
 
-from cgeval.classifier import OllamaClassifier, TransformersClassifier
+from cgeval.classifier import OllamaClassifier, TransformersClassifier, YoloClassifier, TransformerImageClassifier, OllamaImageClassifier
 from cgeval.rating import Ratings, Observation, Label
 
 def load_classifiers(cfg):
@@ -15,6 +15,12 @@ def load_classifiers(cfg):
             classifier = TransformersClassifier(classifier_cfg)
         elif classifier_cfg.type == 'ollama':
             classifier = OllamaClassifier(classifier_cfg)
+        elif classifier_cfg.type == 'yolo':
+            classifier = YoloClassifier(classifier_cfg, cfg.annotate.image_base_path)
+        elif classifier_cfg.type == 'transformers-image':
+            classifier = TransformerImageClassifier(classifier_cfg, cfg.annotate.image_base_path)
+        elif classifier_cfg.type == 'ollama-image':
+            classifier = OllamaImageClassifier(classifier_cfg, cfg.annotate.image_base_path)
         classifiers.append(classifier)
 
     return classifiers

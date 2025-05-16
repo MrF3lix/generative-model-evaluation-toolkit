@@ -23,11 +23,15 @@ def plot(cfg, report_path):
     Path(out).mkdir(parents=True, exist_ok=True)
 
     if cfg.quantify.comparison == 'binary':
-        fig_obs = plot_binary(reports, cfg.classifier, 'alpha_obs', 'Observed Distribution')
-        fig_obs.savefig(f"{out}/observed_distribution.png", bbox_inches='tight')
 
-        fig = plot_binary(reports, cfg.classifier, 'alpha', 'Corrected Distribution')
-        fig.savefig(f"{out}/corrected_distribution.png", bbox_inches='tight')
+        if cfg.evaluate.method == 'CPCC':
+            return
+        else:
+            fig_obs = plot_binary(reports, cfg.classifier, 'alpha_obs', 'Observed Distribution')
+            fig_obs.savefig(f"{out}/observed_distribution.png", bbox_inches='tight')
+
+            fig = plot_binary(reports, cfg.classifier, 'alpha', 'Corrected Distribution')
+            fig.savefig(f"{out}/corrected_distribution.png", bbox_inches='tight')
     else:
         fig = plot_triangle(cfg.classifier[0].labels, reports, cfg.classifier, ['p_true'], desired_dist=[0.35, 0.3, 0.35])
 
