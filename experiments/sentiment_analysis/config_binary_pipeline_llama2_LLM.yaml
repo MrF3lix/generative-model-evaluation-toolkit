@@ -1,0 +1,29 @@
+experiment:
+  name: 'sentiment_llama2_LLM'
+  report_path: 'out'
+env:
+  device: mps
+annotate:
+  out: out/annotate/2025-05-09_llama2/dataset-mini.json
+dataset:
+  batch_size: 10
+classifier:
+  - id: llama3-3-70b
+    type: ollama
+    url: http://sanjose.zhaw.ch:8648/api/generate
+    name: qwen3:235b
+    output: class
+    labels: 
+      - id: 0
+        name: positive
+      - id: 1
+        name: neutral
+      - id: 2
+        name: negative
+evaluate:
+  out: evaluate
+  method: BCC
+quantify:
+  out: quantify
+plot:
+  out: plot

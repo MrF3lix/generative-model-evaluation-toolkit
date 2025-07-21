@@ -9,27 +9,27 @@ annotate:
 dataset:
   batch_size: 10
 classifier:
-  # - id: Yolov8
-  #   type: yolo
-  #   name: ultralytics/yolov8
-  #   file: 'yolov8n.pt'
-  #   output: class
-  #   label_task: count
-  #   labels: 
-  #     - id: 0
-  #       name: count_match
-  #     - id: 1
-  #       name: count_no_match
-  # - id: DETR
-  #   type: transformers-image
-  #   name: facebook/detr-resnet-50
-  #   output: class
-  #   label_task: count
-  #   labels: 
-  #     - id: 0
-  #       name: count_match
-  #     - id: 1
-  #       name: count_no_match
+  - id: Yolov8
+    type: yolo
+    name: ultralytics/yolov8
+    file: 'yolov8n.pt'
+    output: class
+    label_task: count
+    labels: 
+      - id: 0
+        name: count_no_match
+      - id: 1
+        name: count_match
+  - id: DETR
+    type: transformers-image
+    name: facebook/detr-resnet-50
+    output: class
+    label_task: count
+    labels: 
+      - id: 0
+        name: count_no_match
+      - id: 1
+        name: count_match
   - id: LLaVA
     type: ollama-image
     name: llava
@@ -39,14 +39,17 @@ classifier:
     label_task: count
     labels: 
       - id: 0
-        name: count_match
-      - id: 1
         name: count_no_match
+      - id: 1
+        name: count_match
 evaluate:
   out: evaluate
   method: BCC
 quantify:
   out: quantify
   comparison: binary
+  # subsampling:
+  #   B: [0,20,50,100]
+  #   M: [100,500,1000,10000]
 plot:
   out: plot

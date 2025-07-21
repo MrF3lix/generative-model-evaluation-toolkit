@@ -18,8 +18,11 @@ class OllamaClassifier(Classifier):
                 label_names = list(map(lambda l: l['name'], self.cfg.labels))
                 content = f"Classify this text and assign it one of the following sentiment classes: {label_names}. Only respond with one of the classes nothing else. [TEXT]{input['output'][:512]}[/TEXT]"
 
+                content = "How are you?"
+
                 payload = {
                     'model': self.cfg.name,
+                    # 'prompt': content,
                     'messages': [
                         {
                             'role': 'user',
@@ -31,6 +34,8 @@ class OllamaClassifier(Classifier):
 
                 x = requests.post(self.cfg.url, json=payload)
                 response = json.loads(x.text)
+
+                print(response)
 
                 # TODO: Find a better way to extract the correct label from the response
                 predicted_label = response['message']['content'].replace('[', '').replace(']', '').replace("'", '').lower()

@@ -47,7 +47,7 @@ class Ratings():
 
         oracle_ratings = [o.oracle for o in items]
         metric_ratings = [o.metric for o in items]
-
+        
         cm = confusion_matrix(oracle_ratings, metric_ratings, labels=self.get_label_ids())
         return cm.ravel()
     

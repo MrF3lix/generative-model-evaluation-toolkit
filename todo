@@ -1,5 +1,0 @@
-uv run pipeline --config ./experiments/animal_detection/config_evaluate_flux_animal.yaml
-uv run pipeline --config ./experiments/animal_detection/config_evaluate_flux_count.yaml
-
-uv run pipeline --config experiments/animal_detection/config_evaluate_stable-diffuion_animal.yaml
-uv run pipeline --config experiments/animal_detection/config_evaluate_stable-diffuion_count.yaml

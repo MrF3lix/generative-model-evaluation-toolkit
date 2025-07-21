@@ -5,6 +5,7 @@ import numpy as np
 from collections import Counter
 from numpyro import infer
 from numpyro import distributions as dist
+from sklearn.metrics import confusion_matrix, precision_recall_fscore_support
 
 from cgeval import QuantificationMethod
 from cgeval.report import BccReport
@@ -21,7 +22,6 @@ class BCC(QuantificationMethod):
         super().__init__()
 
     def quantify(self, ratings: Ratings, classifier: str) -> BccReport:
-        n_classes = 2 if self.cfg.quantify.comparison == 'binary' else ratings.get_label_count()
         mu = ratings.compute_mixture_matrix()
 
         oracle = ratings.get_oracle_ratings()
@@ -30,21 +30,13 @@ class BCC(QuantificationMethod):
         # TODO: Investigate 
         metric = [x for x in metric if x is not None] 
 
-        # oracle_ratings = np.array(sorted(Counter(oracle).items()))[:,1][0:n_classes].astype(int)
-        # metric_ratings = np.array(sorted(Counter(metric).items()))[:,1][0:n_classes].astype(int)
-
-
-        # HACK: There's a better way
         oracle_ratings_count = Counter(oracle)
         oracle_ratings = np.array([oracle_ratings_count[0], oracle_ratings_count[1]])
 
         metric_ratings_count = Counter(metric)
         metric_ratings = np.array([metric_ratings_count[0], metric_ratings_count[1]])
-
-        print(oracle)
-        print(oracle_ratings)
         
-        samples = self.mcmm_sampling(mu, oracle_ratings, metric_ratings, ratings)
+        # samples = self.mcmm_sampling(mu, oracle_ratings, metric_ratings, ratings)
         try:
             samples = self.mcmm_sampling(mu, oracle_ratings, metric_ratings, ratings)
         except Exception as e:  
@@ -71,40 +63,21 @@ class BCC(QuantificationMethod):
             id = label.id
             name = label.name
 
-            if self.cfg.quantify.comparison == 'binary':
-                s = samples['alpha']
+            s = samples['alpha']
+            report[name] = {
+                'count_inputs': input_counts[id] / total,
+                'count_metric_ratings': metric_counts[id] / total,
+                'oracle_ratings': oracle.tolist(),
+                f'p_true_mean': round(float(s.mean()), 4),
+                f'p_true_std': round(float(s.std()), 4),
+                f'p_true_5': round(float(np.quantile(s, 0.95)), 4),
+                f'p_true_95': round(float(np.quantile(s, 0.05)), 4)
+            }
 
-                if id == 0:
-                    report[name] = {
-                        'count_inputs': input_counts[id] / total,
-                        'count_metric_ratings': metric_counts[id] / total,
-                        'oracle_ratings': oracle.tolist(),
-                        f'p_true_mean': round(float(1 - s.mean()), 4),
-                        f'p_true_std': round(float(s.std()), 4),
-                        f'p_true_5': round(float(1 - np.quantile(s, 0.95)), 4),
-                        f'p_true_95': round(float(1 - np.quantile(s, 0.05)), 4)
-                    }
-                else:
-                    report[name] = {
-                        'count_inputs': input_counts[id] / total,
-                        'count_metric_ratings': metric_counts[id] / total,
-                        'oracle_ratings': oracle.tolist(),
-                        f'p_true_mean': round(float(s.mean()), 4),
-                        f'p_true_std': round(float(s.std()), 4),
-                        f'p_true_5': round(float(np.quantile(s, 0.05)), 4),
-                        f'p_true_95': round(float(np.quantile(s, 0.95)), 4)
-                    }
-
-            else:
-                s = samples['p_true'][:,id]
-                report[name] = {
-                    'count_inputs': input_counts[id] / total,
-                    'count_metric_ratings': metric_counts[id] / total,
-                    f'p_true_mean': round(float(s.mean()), 4),
-                    f'p_true_std': round(float(s.std()), 4),
-                    f'p_true_5': round(float(np.quantile(s, 0.05)), 4),
-                    f'p_true_95': round(float(np.quantile(s, 0.95)), 4)
-                }
+            if id == 0:
+                report[name]['p_true_mean'] = round(float(1 - s.mean()), 4)
+                report[name]['p_true_5'] = round(float(1 - np.quantile(s, 0.95)), 4),
+                report[name]['p_true_95'] = round(float(1 - np.quantile(s, 0.05)), 4)
 
         a = int(oracle_ratings[1]) + 1
         b = int(oracle_ratings[0]) + 1
@@ -114,6 +87,13 @@ class BCC(QuantificationMethod):
     def mcmm_sampling(self, mu_data, oracle_data, metric_data, ratings):
         def binar_model_fn():
             (tn, fp, fn, tp) = ratings.compute_confusion_matrix()
+
+            # TODO: Check if this works for the images!
+            # print(metric_data)
+            # print(oracle_data)
+            # print(tn, fp, fn, tp)
+
+            # raise Exception('Done')
 
             tpr = numpyro.sample(
                 "tpr",
@@ -141,30 +121,8 @@ class BCC(QuantificationMethod):
                 obs=metric_data[1],
             )
 
-        def model_fn():
-            mu_cols = []
-            for ix, col in enumerate(mu_data):
-                mu_cols.append(numpyro.sample(
-                    f"mu_col_{ix}",
-                    dist.Dirichlet(jnp.array(col) + 1)
-                ))
-            mu = jnp.array(mu_cols).T
-
-            ps = numpyro.sample(
-                "p_true",
-                dist.Dirichlet(jnp.array(oracle_data) + 1)
-            )
-
-            p_obs = numpyro.deterministic("p_obs", mu @ ps)
-
-            numpyro.sample(
-                "n_obs",
-                dist.Multinomial(total_count=metric_data.sum(), probs=p_obs),
-                obs=jnp.array(metric_data),
-            )
-
         sampler = infer.MCMC(
-            infer.NUTS(binar_model_fn if self.cfg.quantify.comparison == 'binary' else model_fn),
+            infer.NUTS(binar_model_fn),
             num_warmup=2_000,
             num_samples=10_000,
             num_chains=5,

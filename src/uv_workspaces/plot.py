@@ -1,41 +1,56 @@
 import argparse
+import itertools
 from omegaconf import OmegaConf
 from pathlib import Path
 from datetime import datetime
+import matplotlib.pyplot as plt
 
-from cgeval.report import GenericReport, plot_triangle, plot_binary
+from cgeval.report import GenericReport, plot_binary
 
-def load_reports(cfg, report_path):
+def load_reports(cfg, report_path, subsampling=None):
     reports = []
 
     for classifier in cfg.classifier:
-        report = GenericReport()
-        report.load(f"{report_path}/{cfg.quantify.out}/cls_report_{classifier.id}.json")
+        if subsampling is not None:
+            B, M = subsampling
+            report = GenericReport()
+            report.load(f"{report_path}/{cfg.quantify.out}/subsampling/cls_report_{classifier.id}_{B}_{M}.json")
+        else:
+            report = GenericReport()
+            report.load(f"{report_path}/{cfg.quantify.out}/cls_report_{classifier.id}.json")
+
         reports.append(report)
 
     return reports
 
+def plot_comparison(cfg, out, reports):
+    fig_obs = plot_binary(reports, cfg.classifier, 'alpha_obs', 'Observed Distribution')
+    fig_obs.savefig(f"{out}/observed_distribution.png", bbox_inches='tight')
+    plt.close(fig_obs)
+
+    fig = plot_binary(reports, cfg.classifier, 'alpha', 'Corrected Distribution')
+    fig.savefig(f"{out}/corrected_distribution.png", bbox_inches='tight')
+    plt.close(fig)
+
 def plot(cfg, report_path):
+    if 'subsampling' in cfg.quantify:
+        B = cfg.quantify.subsampling.B
+        M = cfg.quantify.subsampling.M
+
+        for subsampling in list(itertools.product(B, M)):
+            reports = load_reports(cfg, report_path, subsampling)
+
+            out = f"{report_path}/{cfg.plot.out}/subsampling/{subsampling[0]}_{subsampling[1]}"
+            Path(out).mkdir(parents=True, exist_ok=True)
+            plot_comparison(cfg, out, reports)
+
 
     reports = load_reports(cfg, report_path)
 
     out = f"{report_path}/{cfg.plot.out}"
     Path(out).mkdir(parents=True, exist_ok=True)
+    plot_comparison(cfg, out, reports)
 
-    if cfg.quantify.comparison == 'binary':
-
-        if cfg.evaluate.method == 'CPCC':
-            return
-        else:
-            fig_obs = plot_binary(reports, cfg.classifier, 'alpha_obs', 'Observed Distribution')
-            fig_obs.savefig(f"{out}/observed_distribution.png", bbox_inches='tight')
-
-            fig = plot_binary(reports, cfg.classifier, 'alpha', 'Corrected Distribution')
-            fig.savefig(f"{out}/corrected_distribution.png", bbox_inches='tight')
-    else:
-        fig = plot_triangle(cfg.classifier[0].labels, reports, cfg.classifier, ['p_true'], desired_dist=[0.35, 0.3, 0.35])
-
-        fig.savefig(f"{out}/ternary_plot.png")
 
 def main():
     parser = argparse.ArgumentParser(description="A toolkit for robust evaluation of generative models.")

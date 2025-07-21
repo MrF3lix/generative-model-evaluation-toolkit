@@ -1,5 +1,5 @@
 experiment:
-  name: 'sentiment_analysis_mistral'
+  name: 'sentiment_mistral'
   report_path: 'out'
 env:
   device: mps
@@ -14,22 +14,18 @@ classifier:
     output: class
     labels: 
       - id: 0
-        name: positive
+        name: sentiment_no_match
       - id: 1
-        name: neutral
-      - id: 2
-        name: negative
+        name: sentiment_match
   - id: lxyuan_DistilBert
     type: transformers
     name: lxyuan/distilbert-base-multilingual-cased-sentiments-student
     output: class
     labels: 
       - id: 0
-        name: positive
+        name: sentiment_no_match
       - id: 1
-        name: neutral
-      - id: 2
-        name: negative
+        name: sentiment_match
   - id: ollama3.2
     type: ollama
     url: http://localhost:11434/api/chat
@@ -37,16 +33,16 @@ classifier:
     output: class
     labels: 
       - id: 0
-        name: positive
+        name: sentiment_no_match
       - id: 1
-        name: neutral
-      - id: 2
-        name: negative
+        name: sentiment_match
 evaluate:
   out: evaluate
   method: BCC
 quantify:
   out: quantify
-  comparison: binary
+  # subsampling:
+  #   B: [0,20,50,100]
+  #   M: [100,500,1000,10000]
 plot:
   out: plot

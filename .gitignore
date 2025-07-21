@@ -12,3 +12,5 @@ wheels/
 
 out
 temp
+
+.DS_Store

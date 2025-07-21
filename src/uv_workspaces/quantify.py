@@ -1,7 +1,8 @@
-import re
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from multiprocessing import get_context
+import os
+import itertools
 import argparse
-import json
-import numpy as np
 import pandas as pd
 from omegaconf import OmegaConf
 from pathlib import Path
@@ -9,7 +10,6 @@ from datetime import datetime
 
 from cgeval.method import ClassifyAndCount, StandardClassification, BCC, CPCC
 from cgeval.rating import Ratings, Label, Observation
-
 
 def load_evaluation_method(cfg):
     if cfg.evaluate.method == 'CC':
@@ -21,102 +21,114 @@ def load_evaluation_method(cfg):
     elif cfg.evaluate.method == 'Classification':
         return StandardClassification()
 
-def label_name_to_id(name: str, labels) -> int:
-    return next((l['id'] for l in labels if l['name'] == name), None)
+def is_label_positive(label: str, positive_label: str) -> int:
+    """
+    Returns `1` if the label equals the positive label `positive_label` else `0`.
+    Returns `None` if the label is `None`
+    """
 
-def label_match_to_id(match: str, matching_label: str) -> int:
-    # HACK: Why does this work for the stories?
-    # return int(match == True) if match is not None else match
-    # print(match)
-    return int(match == matching_label) if match is not None else match
-    # return int(match == 'animal_match') if match is not None else match
+    return int(label == positive_label) if label is not None else label
 
-def extract_sentiment(input):
-    m = re.search('The story should have a (.+?) sentiment', input)
-    if m:
-        found = m.group(1)
-        return found
+def load_subsample_ratings(cfg, classifier, report_path, subsampling) -> pd.DataFrame:
+    B, M = subsampling
 
-    return input
+    df = pd.read_json(f"{report_path}/{cfg.evaluate.out}/dataset_{classifier.id}.json", orient='records')
 
-def load_ratings(cfg, classifier, report_path) -> Ratings:
-    with open(f"{report_path}/{cfg.evaluate.out}/dataset_{classifier.id}.json", 'r') as f:
-        ratings_data = json.load(f)
+    df_oracle = df.loc[~df['oracle'].isna()]
+    df_metric_only = df.loc[df['oracle'].isna()]
 
-    if cfg.quantify.comparison == 'binary':
+    # df_oracle_subsample = df_oracle.sample(B if B < len(df_oracle) else len(df_oracle), random_state=0xdeadbeef)
+    # df_metric_only_subsample = df_metric_only.sample(M if M < len(df_metric_only) else len(df_metric_only), random_state=0xdeadbeef)
+    df_oracle_subsample = df_oracle.sample(B if B < len(df_oracle) else len(df_oracle))
+    df_metric_only_subsample = df_metric_only.sample(M if M < len(df_metric_only) else len(df_metric_only))
 
-        if classifier.output == 'logits':
-            label2id = lambda label: list(map(lambda l: l['name'], classifier.labels)).index(label)
-            
-            df = pd.DataFrame(ratings_data)
-            df['condition'] = df['input'].apply(extract_sentiment)
-            df['condition_id'] = df['condition'].apply(label2id)
-            df['oracle'] = df.apply(lambda r: r['oracle'] == r['condition'] if(pd.notnull(r['oracle'])) else r['oracle'], axis=1)
-
-            df['X'] = df.apply(lambda row: row['metric'][int(row['condition_id'])],axis=1)
-            df['y'] = df['oracle']
-
-            observations = df.to_dict(orient='records')
-            observations = list(map(lambda i: Observation(
-                id=i['id'],
-                output=i['output'],
-                input=i['condition_id'],
-                oracle=i['y'],
-                metric=i['X']
-            ), observations))
-
-        else:
-            df = pd.DataFrame(ratings_data)
-            # HACK: Only works with the Story Dataset
-            # df['condition'] = df['input'].apply(extract_sentiment)
+    return pd.concat([df_oracle_subsample, df_metric_only_subsample])
 
 
-            # TODO: Does this happen on 
-            # df['oracle'] = df.apply(lambda r: r['oracle'] == r['condition'] if(pd.notnull(r['oracle'])) else r['oracle'], axis=1)
-            # df['metric'] = df['metric'] == df['condition']
-
-            observations = df.to_dict(orient='records')
-            observations = list(map(lambda i: Observation(
-                id=i['id'],
-                output=i['output'],
-                input=1,
-                oracle=label_match_to_id(i['oracle'], classifier.labels[0].name),
-                metric=label_match_to_id(i['metric'], classifier.labels[0].name)
-            ), observations))
-
-        # HACK: only for the sentiment stories
-        # labels = [Label(0, 'no match'), Label(1, 'match')]
-        labels = list(map(lambda l: Label(**l), classifier.labels))
-    
+def load_ratings(cfg, classifier, report_path, subsampling=None) -> Ratings:
+    if subsampling is not None:
+        df = load_subsample_ratings(cfg, classifier, report_path, subsampling)
     else:
-        observations = list(map(lambda i: Observation(
-            id=i['id'],
-            output=i['output'],
-            input=label_name_to_id(i['input'], classifier.labels),
-            oracle=label_name_to_id(i['oracle'], classifier.labels),
-            metric=label_name_to_id(i['metric'], classifier.labels)
-        ), ratings_data))
+        df = pd.read_json(f"{report_path}/{cfg.evaluate.out}/dataset_{classifier.id}.json", orient='records')
 
-        labels = list(map(lambda l: Label(**l), classifier.labels))
+    # TODO: Document that the positive label has the index 1
+    positive_label = classifier.labels[1]
+
+    observations = df.to_dict(orient='records')
+    observations = list(map(lambda i: Observation(
+        id=i['id'],
+        output=i['output'],
+        input=1,
+        oracle=is_label_positive(i['oracle'], positive_label.name),
+        metric=is_label_positive(i['metric'], positive_label.name)
+    ), observations))
+
+    labels = list(map(lambda l: Label(**l), classifier.labels))
 
     return Ratings(labels=labels, observations=observations)
+
+def compute_subsampling(args):
+    cfg, classifier, method, report_path, ratings, subsampling, i = args
+    report = method.quantify(ratings, classifier.id)
+
+    out = f"{report_path}/{cfg.quantify.out}/subsampling"
+    Path(out).mkdir(parents=True, exist_ok=True)
+    report.save(f"{out}/cls_report_{classifier.id}_{subsampling[0]}_{subsampling[1]}_{i}.json")
 
 def quantify(cfg, report_path):
     method = load_evaluation_method(cfg)
 
-    reports = []
-    for classifier in cfg.classifier:
-        ratings = load_ratings(cfg, classifier, report_path)
-         
+    # if pool_size > 1:
+    #     print(exp_desc)
+    #     with get_context('spawn').Pool(pool_size) as pool:
+    #         n_tasks_per_chunk = ceil(len(experiments) / len(pool._pool))
+    #         # results = list(tqdm(p.imap(runner.run, experiments, chunksize=n_tasks_per_chunk), total=len(experiments), desc=exp_desc))
+    #         start_time = time.time()
+    #         results = list(pool.imap(runner.run, experiments, chunksize=n_tasks_per_chunk))
+    #         elapsed_time = time.time() - start_time
+    #         print(f'Experiment Done. Elapsed Time: {elapsed_time:.3f}')
+    #         pool.close()
+    #         pool.join()
+    # else:
+    #     results = [runner.run(ex) for ex in tqdm(experiments, desc=exp_desc)]
+
+
+    # TODO: Load all subsampling DFs
+    if 'subsampling' in cfg.quantify:
+
+        with get_context('spawn').Pool(20) as pool:
+            tasks = []
+            for classifier in cfg.classifier:
+                if 'subsampling' in cfg.quantify:
+                    B = cfg.quantify.subsampling.B
+                    M = cfg.quantify.subsampling.M
+                    repeat = cfg.quantify.subsampling.repeat
+
+                    for subsampling in list(itertools.product(B, M)):
+                        for i in range(repeat):
+                            print(classifier.id, subsampling, i)
+
+                            ratings = load_ratings(cfg, classifier, report_path, subsampling)
+                            tasks.append((cfg, classifier, method, report_path, ratings, subsampling, i))
+
+
+            print('Submitted', len(tasks), 'Tasks')
+            pool.map(compute_subsampling, tasks)
+            print('Done')
+
+    else:
         out = f"{report_path}/{cfg.quantify.out}"
         Path(out).mkdir(parents=True, exist_ok=True)
 
-        report = method.quantify(ratings, classifier.id)
-        report.save(f"{out}/cls_report_{classifier.id}.json")
-        reports.append(report)
+        for classifier in cfg.classifier:
+            ratings = load_ratings(cfg, classifier, report_path)   
+                
+
+            report = method.quantify(ratings, classifier.id)
+            report.save(f"{out}/cls_report_{classifier.id}.json")
         
-        print(classifier.id)
-        print(report)
+            print(classifier.id)
+            print(report)
 
 def main():
     parser = argparse.ArgumentParser(description="A toolkit for robust evaluation of generative models.")
@@ -126,7 +138,7 @@ def main():
     args = parser.parse_args()
     cfg = OmegaConf.load(args.config)
 
-    now = datetime.today().strftime('%Y-%m-%d_%H-%M')
+    now = datetime.today().strftime('%Y-%m-%d')
     report_path = f"{cfg.experiment.report_path}/quantify/{now}_{cfg.experiment.name}"
     Path(report_path).mkdir(parents=True, exist_ok=True)
 

@@ -49,34 +49,41 @@ class OllamaImageClassifier(Classifier):
 
                 response = result.get("response")
 
-                try:
-                    search_pattern = r'(\d+) ([A-Za-z]+)'
-                    m = re.search(search_pattern, response)
-
-                    target_string = m.group()
-
-                    count = int(target_string.split(' ')[0])
-                    animal = target_string.split(' ')[1]
-                except:
-                    count = 0
-                    animal = 'NOTHING'
-
-                condition_animal = get_animal(input['input'])
-                condition_count = get_count(input['input'])
-
-                if self.cfg.label_task == 'count':
-                    label = 'count_no_match'
-                    if count == condition_count:
-                        label = 'count_match'
-
-                elif self.cfg.label_task == 'animal':
-                    label = 'animal_no_match'
-                    if animal == condition_animal:
-                        label = 'animal_match'
-
                 metric_ratings.append({
                     **input,
-                    'metric': label
+                    'metric': response
                 })
+
+                # try:
+                #     search_pattern = r'(\d+) ([A-Za-z]+)'
+                #     m = re.search(search_pattern, response)
+
+                #     target_string = m.group()
+
+                #     count = int(target_string.split(' ')[0])
+                #     animal = target_string.split(' ')[1]
+                # except:
+                #     count = 0
+                #     animal = 'NOTHING'
+
+                # condition_animal = get_animal(input['input'])
+                # condition_count = get_count(input['input'])
+
+                # if self.cfg.label_task == 'count':
+                #     label = 'count_no_match'
+                #     if count == condition_count:
+                #         label = 'count_match'
+
+                # elif self.cfg.label_task == 'animal':
+                #     label = 'animal_no_match'
+                #     if animal == condition_animal:
+                #         label = 'animal_match'
+
+                # metric_ratings.append({
+                #     **input,
+                #     'metric': label
+                # })
+
+            # break
 
         return metric_ratings
