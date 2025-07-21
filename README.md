@@ -1,33 +1,29 @@
 # Generative Model Evaluation Toolkit
 
-A toolkit for robust evaluation of generative models.
+This toolkit was developed as part of a project to showcase how conditional generation can be evaluationed beyond the Classify & Count (CC) method.
 
-## Highlights
-
-- 🚀 A complete evaluation toolkit for generative models
-- ✅ Correct generative model evaluations obtained by trainable classifiers 
-- 💡 Finally compare different generative models without arbitray biases
+- 🚀 A complete evaluation toolkit for conditional generation models
 - 📱 Independent of the generated modality (Text, Image, Audio, etc.)
-- 🔬 Based on scientific [advancements](https://ojs.aaai.org/index.php/ICWSM/article/view/31411) in quantification methods
+- ✅ Achieve robust and unbiased estimates of the true performance
+- 💡 Finally compare different generative models without arbitray biases
 
-## Evaluation Steps
+## Abstract
 
-1. Generate a test set using your generative model
-```bash
-uv run generate
-```
-2. Manually Annotate a subsample (n=100 depending on the task).
-```bash
-uv run annotate
-```
-> **Note**: *If you provide the confusion matrix for you classifier you can skip this step.*
-3. Evaluate your generative model
-```bash
-uv run evaluate
-```
+Attribute control in controllable generation is typically evaluated using pretrained classifiers.
+It has been shown that the common Classify & Count (CC) method leads to biased and inconsistent results.
+Estimates are found to vary significantly across different classifiers.
+In this project, Attribute Control Success (ACS) estimation is framed as a quantification task.
+A hybrid Bayesian method, called Bayesian Classify & Count (BCC), is applied, in which classifier predictions are combined with a small number of human labels used for calibration.
 
-The tasks and their dependencies are descirbed in the section [Tasks](#tasks)
+To evaluate the method, a dual modality benchmark containing both text and image samples was collected.
+It consists of 600 human annotated samples and 60′000 metric annotated samples. Through experiments, it is shown that the BCC method produces robust estimates across both text and text-to-image generation tasks.
+It is also shown that the BCC method enables consistent pairwise comparisons of model performance across different classifiers, yielding stable rankings among generators.
 
+Furthermore, the information gain from metric annotations is quantified, highlighting the added value of human annotations over metric-based ones.
+Thus, a more reliable and principled alternative to existing evaluation practices is provided.
+
+As part of this project, a toolkit was developed that can be used—either in parts or as a whole—to estimate ACS on various generative models.
+Support is provided for both text and text-to-image generation in combination with binary attribute control.
 
 ## Prerequisites
 
@@ -48,6 +44,28 @@ If you want to use this exact toolkit follow these steps:
 ## Architecture
 
 Read more about the [architecture](./docs/architecture.md) and decisions during the development of this tooklit.
+
+## How to run it
+
+1. Generate a test set using your generative model
+```bash
+uv run generate
+```
+2. Manually Annotate a subsample (n=100 depending on the task).
+```bash
+uv run annotate
+```
+3. Evaluate your generative model using pre-trained classifiers
+```bash
+uv run evaluate
+```
+4. Quantify & correct the biased results
+```bash
+uv run quantify
+```
+
+The tasks and their dependencies are descirbed in the section [Tasks](#tasks)
+
 
 ## Config
 
@@ -191,6 +209,7 @@ The annotated dataset then looks like this:
 - $k$: Number of samples that will should an annotation
 
 ### Evaluate
+### Quantify
 
 Extends the dataset with a column for each classifier $\Mu$.
 
