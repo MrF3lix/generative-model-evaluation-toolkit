@@ -7,6 +7,8 @@ This toolkit was developed as part of a project to showcase how conditional gene
 - ✅ Achieve robust and unbiased estimates of the true performance
 - 💡 Finally compare different generative models without arbitray biases
 
+The full report can be found in [VT2_controlled_text_generation_evaluation.pdf](./VT2_controlled_text_generation_evaluation.pdf).
+
 ## Abstract
 
 Attribute control in controllable generation is typically evaluated using pretrained classifiers.
